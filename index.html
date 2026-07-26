@@ -1,0 +1,834 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MASTER V2 — COMPLETO (puntos 1–32)</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Anton&family=Bebas+Neue&family=Archivo+Black&family=Big+Shoulders+Display:wght@700;900&family=Permanent+Marker&family=DM+Mono:wght@400;500&display=swap');
+
+:root{
+  --accent:#e51e2d;
+  --accent-glow:rgba(229,30,45,.5);
+  --black:#0a0a0a;
+  --white:#f5f2ec;
+  --paper:#efe9dd;
+  --yellow:#f0d020;
+  --f-display:'Anton',sans-serif;
+  --f-mono:'DM Mono',monospace;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+html,body{height:100%;overflow:hidden;}
+body{background:var(--black);font-family:var(--f-mono);cursor:default;}
+
+/* ===================== 30. FONDO ===================== */
+.bg-tear{ position:fixed; inset:0; z-index:0; pointer-events:none;
+  background:repeating-linear-gradient(135deg, transparent 0 40px, rgba(255,255,255,0.02) 40px 42px); }
+.halftone{ position:fixed; top:-12%; right:-16%; width:74vw; height:132vh; z-index:0; pointer-events:none;
+  background-image:radial-gradient(var(--accent) 22%, transparent 23%); background-size:15px 15px; opacity:.5; transform:rotate(-8deg); }
+.halftone2{ position:fixed; bottom:-10%; left:-8%; width:38vw; height:38vw; z-index:0; pointer-events:none;
+  background-image:radial-gradient(var(--white) 16%, transparent 17%); background-size:12px 12px; opacity:.04; }
+
+.page{ position:relative; z-index:5; display:flex; height:100vh; max-width:1760px; margin:0 auto; }
+.content{ flex:0 1 auto; min-width:460px; padding:2.6vh 2vw 2.6vh 3.5vw; display:flex; flex-direction:column; gap:10px; }
+
+/* 1. EYEBROW — fijo: "MI SISTEMA — MI VIDA" + sub cursiva */
+.eyebrow{ font-family:var(--f-mono); letter-spacing:.45em; font-size:10.5px; color:var(--accent); opacity:0; animation:riseIn .5s .1s forwards; }
+.eyebrow-sub{ font-family:var(--f-mono); font-style:italic; font-size:10px; color:#8a8580; margin-top:2px; opacity:0; animation:riseIn .5s .15s forwards; }
+@keyframes riseIn{ to{opacity:1;} }
+
+/* 2. TÍTULO — fijo: "HAZLO REAL" */
+.title{ font-family:var(--f-display); font-size:clamp(52px,7.2vw,92px); line-height:.86; color:var(--white); text-transform:uppercase; letter-spacing:-1px; -webkit-text-stroke:2.5px var(--black); opacity:0; animation:slamIn .55s .2s cubic-bezier(.2,.9,.15,1.15) forwards; cursor:pointer; user-select:none; margin-top:6px; }
+.title span{ display:block; filter:drop-shadow(4px 4px 0 var(--accent)); }
+@keyframes slamIn{ 0%{opacity:0; transform:scale(1.3) rotate(-3deg);} 60%{opacity:1;} 100%{opacity:1; transform:scale(1) rotate(0);} }
+.title.punch{ animation:punch .35s ease; }
+@keyframes punch{ 0%{transform:scale(1);} 30%{transform:scale(1.06) rotate(-1.5deg);} 60%{transform:scale(.97) rotate(1deg);} 100%{transform:scale(1) rotate(0);} }
+
+/* 3. SALUDO */
+.greeting{ display:flex; align-items:center; gap:9px; margin-top:9px; opacity:0; animation:riseIn .5s .7s forwards; }
+.greeting .icon{ font-size:17px; }
+.greeting .txt{ font-family:var(--f-display); font-size:14px; letter-spacing:.04em; color:var(--white); text-transform:uppercase; }
+
+/* 4. FRASE */
+.frase-dia{ font-family:var(--f-mono); font-size:10px; color:#8a8580; font-style:italic; margin-top:4px; opacity:0; animation:riseIn .5s .85s forwards; max-width:400px; }
+
+/* 5/6 PESO */
+.peso-chip{ display:flex; flex-direction:column; gap:6px; background:rgba(229,30,45,.08); border:1px dashed rgba(245,242,236,.25); padding:8px 15px; margin-top:2px; opacity:0; animation:riseIn .5s .95s forwards; transform:rotate(-1deg); min-width:270px; max-width:300px; }
+.peso-chip .row1{ display:flex; align-items:baseline; gap:8px; flex-wrap:wrap; }
+.peso-chip .ic{ font-size:14px; color:var(--white); }
+.peso-chip .main{ font-family:'Archivo Black',sans-serif; font-size:16px; color:var(--white); }
+.peso-chip .tag{ font-family:var(--f-mono); font-size:8px; color:#a89f8a; }
+.peso-chip .falta{ font-family:var(--f-mono); font-size:10px; color:var(--yellow); margin-left:auto; }
+.month-track{ position:relative; height:7px; background:rgba(245,242,236,.1); }
+.month-track .fill{ position:absolute; left:0; top:0; bottom:0; background:linear-gradient(90deg,var(--accent),var(--yellow)); transition:width .5s; }
+.month-track .tick{ position:absolute; top:-2px; bottom:-2px; width:2px; background:rgba(10,10,10,.55); }
+.month-cap{ display:flex; justify-content:space-between; font-family:var(--f-mono); font-size:7.5px; color:#8a8580; }
+
+.top-row{ display:flex; justify-content:space-between; align-items:flex-start; gap:18px; flex-wrap:wrap; }
+
+/* 7-13 HUD */
+.hud-status{ text-align:right; color:var(--paper); font-size:11.5px; letter-spacing:.07em; opacity:0; animation:riseIn .5s .3s forwards; display:flex; flex-direction:column; gap:5px; min-width:220px; }
+.hud-top{ display:flex; align-items:center; justify-content:flex-end; gap:9px; }
+.style-btn{ display:flex; align-items:center; gap:6px; border:1px solid rgba(245,242,236,.25); padding:4px 8px; cursor:pointer; transition:.15s; background:rgba(0,0,0,.4); }
+.style-btn:hover{ border-color:var(--accent); background:var(--accent); }
+.style-btn:hover .style-lbl{ color:var(--black); }
+.style-lbl{ font-family:var(--f-mono); font-size:8.5px; color:#8a8580; letter-spacing:.07em; white-space:nowrap; }
+.hud-clock{ font-family:var(--f-display); font-size:18px; color:var(--white); }
+.streak-inline{ display:flex; align-items:center; gap:6px; justify-content:flex-end; }
+.streak-inline .flame{ font-size:18px; animation:flameFlick 1.4s ease-in-out infinite; }
+@keyframes flameFlick{ 0%,100%{ transform:scale(1) rotate(-2deg);} 50%{ transform:scale(1.15) rotate(2deg);} }
+.streak-inline .num{ font-family:var(--f-display); font-size:19px; color:var(--white); line-height:1; }
+.streak-t1 .flame{ filter:drop-shadow(0 0 4px var(--accent-glow)); }
+.streak-t2 .flame{ filter:drop-shadow(0 0 7px var(--accent-glow)); font-size:19px; }
+.streak-t3 .flame{ filter:drop-shadow(0 0 10px var(--accent-glow)) drop-shadow(0 0 3px var(--yellow)); font-size:20px; }
+.streak-t4 .flame{ filter:drop-shadow(0 0 13px var(--accent-glow)) drop-shadow(0 0 5px var(--yellow)); font-size:21px; } .streak-t4 .num{ color:var(--yellow); }
+.streak-t5 .flame{ filter:drop-shadow(0 0 16px var(--yellow)); font-size:22px; animation:flameFlick 1.1s ease-in-out infinite; } .streak-t5 .num{ color:var(--yellow); }
+.streak-t6 .flame{ filter:drop-shadow(0 0 20px var(--yellow)) drop-shadow(0 0 8px var(--accent)); font-size:23px; }
+.streak-t7 .flame{ filter:drop-shadow(0 0 24px var(--yellow)) drop-shadow(0 0 10px var(--accent)); font-size:24px; }
+.streak-t8 .flame{ filter:drop-shadow(0 0 28px var(--yellow)) drop-shadow(0 0 14px var(--accent)); font-size:26px; animation:flameFlick .9s ease-in-out infinite; }
+.streak-t9 .flame{ filter:drop-shadow(0 0 34px var(--yellow)) drop-shadow(0 0 18px var(--accent)) drop-shadow(0 0 4px #fff); font-size:28px; animation:flameFlick .8s ease-in-out infinite; }
+.streak-t9 .num{ color:var(--yellow); text-shadow:0 0 12px var(--yellow); }
+.hud-status .sync{ font-size:9.5px; display:flex; gap:5px; align-items:center; justify-content:flex-end; cursor:pointer; opacity:.9; }
+.hud-status .sync .dot{ width:6.5px; height:6.5px; border-radius:50%; background:#2ecf6b; box-shadow:0 0 6px #2ecf6b; flex-shrink:0; }
+.hud-status .sync.syncing .dot{ background:#e5b400; box-shadow:0 0 6px #e5b400; animation:pulse 1s infinite; }
+.hud-status .sync.offline .dot{ background:#ff5050; box-shadow:0 0 6px #ff5050; }
+@keyframes pulse{ 50%{opacity:.3;} }
+
+/* 14 BANNER */
+#ctxBanner{ display:flex; align-items:center; gap:11px; background:rgba(229,30,45,.08); border:1px dashed rgba(245,242,236,.25); padding:6px 14px; max-width:700px; opacity:0; animation:riseIn .5s 1s forwards; transform:rotate(.6deg); }
+#ctxBanner .ctx-ic{ font-size:14px; flex-shrink:0; color:var(--yellow); }
+#ctxBanner .ctx-txt{ font-family:var(--f-mono); font-size:11px; color:var(--paper); transition:opacity .25s; }
+#ctxBanner .ctx-txt b{ color:var(--accent); font-family:'Archivo Black',sans-serif; font-size:10.5px; }
+
+/* 15 PROGRESO SEMANAL */
+#weekProg{ opacity:0; animation:riseIn .5s 1.1s forwards; cursor:pointer; max-width:700px; }
+.wp-head{ display:flex; justify-content:space-between; align-items:baseline; margin-bottom:4px; }
+.wp-head .wp-lbl{ font-family:'Archivo Black',sans-serif; font-size:9.5px; letter-spacing:1px; color:var(--accent); text-transform:uppercase; }
+.wp-head .wp-pct{ font-family:var(--f-mono); font-size:10.5px; color:var(--paper); }
+.wp-track{ height:8px; background:rgba(245,242,236,.1); position:relative; overflow:hidden; transform:skewX(-4deg); }
+.wp-fill{ position:absolute; left:0; top:0; bottom:0; background:linear-gradient(90deg, var(--accent), var(--yellow)); transition:width .5s cubic-bezier(.4,0,.2,1); }
+.wp-hint{ font-family:var(--f-mono); font-size:9.5px; color:var(--paper); opacity:.75; margin-top:4px; }
+
+.right-col{ flex:1 1 auto; min-width:340px; display:flex; flex-direction:column; gap:6px; padding:1.8vh 3vw 1.8vh 0; min-height:0; }
+
+/* 16/17 MENU */
+#menu{ display:flex; flex-direction:column; gap:6px; }
+.item{ position:relative; display:flex; align-items:center; gap:14px; padding:12px 20px; background:rgba(245,242,236,.03); border-left:4px solid var(--accent); cursor:pointer; opacity:0; transform:translateX(-60px) skewX(-6deg); animation:itemIn .5s forwards; overflow:hidden; }
+.item .num-stamp{ font-family:var(--f-display); font-size:13px; color:var(--black); background:var(--accent); width:26px; height:26px; display:flex; align-items:center; justify-content:center; transform:rotate(-6deg); flex-shrink:0; transition:.15s; }
+.item .stickwrap{ display:flex; flex-direction:column; gap:1px; }
+.item .label{ font-family:var(--f-display); font-size:clamp(20px,2vw,27px); text-transform:uppercase; color:var(--white); letter-spacing:.5px; display:flex; transition:color .15s; }
+.item .label b{ display:inline-block; font-style:normal; transition:.1s; }
+.item .label b:nth-child(odd){ transform:translateY(-2px) rotate(-3deg); }
+.item .label b:nth-child(even){ transform:translateY(2px) rotate(2deg); }
+.item .sub{ font-family:var(--f-mono); font-size:11px; color:#8a8580; letter-spacing:.06em; transition:color .15s; }
+.item::before{ content:""; position:absolute; inset:0; background:var(--accent); transform:scaleX(0); transform-origin:left; z-index:-1; transition:transform .22s cubic-bezier(.2,.9,.2,1); }
+.item:hover::before{ transform:scaleX(1); }
+.item:hover .label,.item:hover .sub{ color:var(--black); }
+.item:hover .num-stamp{ background:var(--black); color:var(--accent); }
+.item:active{ transform:translateX(6px) skewX(-6deg) scale(.98); }
+@keyframes itemIn{ to{opacity:1; transform:translateX(0) skewX(-6deg);} }
+.item:nth-child(1){animation-delay:1.2s} .item:nth-child(2){animation-delay:1.25s} .item:nth-child(3){animation-delay:1.3s} .item:nth-child(4){animation-delay:1.35s} .item:nth-child(5){animation-delay:1.4s}
+
+/* ===================== 18/19 RAIL DE MÓDULOS (14 tarjetas, estilo prop1, letra prop5, iconos tipo replica2) ===================== */
+.rail-wrap{ flex:0 0 auto; width:100%; height:clamp(248px,32vh,320px); overflow:hidden; display:flex; flex-direction:column; }
+.rail-label{ font-family:var(--f-mono); letter-spacing:.35em; font-size:9px; color:var(--accent); padding:0 0 5px 4px; opacity:.85; }
+#rail{ flex:1; display:flex; align-items:center; overflow:hidden; -webkit-mask-image:linear-gradient(to left, black 78%, transparent 100%); mask-image:linear-gradient(to left, black 78%, transparent 100%); }
+#railTrack{ display:flex; gap:0; animation:railScroll 34s linear infinite; padding-left:4px; }
+#railTrack:hover{ animation-play-state:paused; }
+.railCard{ width:206px; height:246px; margin-right:15px; background:linear-gradient(160deg,#1e1e1e,#0a0a0a); border:1px solid rgba(245,242,236,.18); position:relative; flex:none; transform:skewX(-6deg); overflow:hidden; cursor:pointer; transition:border-color .15s, transform .15s; }
+.railCard:hover{ border-color:var(--accent); transform:skewX(-6deg) translateY(-3px); }
+.railCard .in{ transform:skewX(6deg); height:100%; display:flex; flex-direction:column; justify-content:space-between; padding:10px 10px 9px; }
+.railCard .ic{ width:28px; height:28px; }
+.railCard .ic svg{ width:100%; height:100%; stroke:var(--accent); fill:none; stroke-width:2; }
+.railCard .mod{ font-family:var(--f-mono); font-size:9px; color:#666; }
+.railCard .nm{ font-family:'Archivo Black',sans-serif; font-size:15.5px; color:var(--white); text-transform:uppercase; line-height:1.15; }
+.railCard .st{ font-family:var(--f-mono); font-size:8.5px; color:#8a8580; margin-top:3px; }
+@keyframes railScroll{ from{ transform:translateX(0); } to{ transform:translateX(-50%); } }
+
+.widgets-row{ display:flex; flex-direction:row; align-items:stretch; gap:11px; flex:1; min-height:0; }
+.w-col{ flex:0 0 360px; max-width:360px; display:flex; flex-direction:column; gap:9px; min-width:0; }
+.w-col:first-child{ flex:0 0 300px; max-width:300px; }
+
+.card{ position:relative; background:linear-gradient(165deg, rgba(229,30,45,.07), rgba(14,13,15,.72) 55%); border:1px solid rgba(245,242,236,.1); clip-path:polygon(0 0, 100% 0, 100% 100%, 14px 100%, 0 calc(100% - 14px)); opacity:0; animation:cardIn .5s forwards; }
+@keyframes cardIn{ from{opacity:0; transform:translateY(12px);} to{opacity:1; transform:translateY(0);} }
+.card:nth-of-type(1){animation-delay:1.5s} .card:nth-of-type(2){animation-delay:1.57s} .card:nth-of-type(3){animation-delay:1.64s} .card:nth-of-type(4){animation-delay:1.71s}
+
+/* 20/21 HÁBITOS HOY + RANGO — estilo prop3, título estilo prop4, contraste corregido, tiers épicos */
+.card-title-p4{ font-family:'Archivo Black',sans-serif; font-size:11px; letter-spacing:1.5px; color:var(--black); text-transform:uppercase; background:var(--accent); padding:7px 14px; }
+.card-title{ font-family:var(--f-display); font-size:11px; letter-spacing:1.5px; color:var(--black); text-transform:uppercase; background:var(--accent); padding:7px 14px; }
+.card-body{ padding:8px 12px 10px; }
+
+.card-wrap{ position:relative; }
+.rk-stamp{ position:absolute; top:-13px; right:12px; z-index:20; width:38px; height:38px; display:flex; align-items:center; justify-content:center;
+  background:var(--yellow); border:3px solid var(--black); box-shadow:3px 3px 0 rgba(0,0,0,.6);
+  transform:rotate(6deg); transition:transform .3s, box-shadow .3s; }
+.rk-stamp.flash{ animation:rflash .8s; }
+@keyframes rflash{ 0%{transform:rotate(6deg) scale(1);} 40%{transform:rotate(-8deg) scale(1.55);} 100%{transform:rotate(6deg) scale(1);} }
+.rk-stamp span{ font-family:'Archivo Black',sans-serif; font-size:19px; color:var(--black); line-height:1; }
+.rk-F{ background:#9a9a9a; }
+.rk-E{ background:#aaaaaa; }
+.rk-D{ background:#c2b46a; }
+.rk-C{ background:#d9c04a; }
+.rk-B{ background:#e8c62a; box-shadow:3px 3px 0 rgba(0,0,0,.6), 0 0 12px rgba(240,208,32,.4); }
+.rk-A{ background:#f0c020; box-shadow:3px 3px 0 rgba(0,0,0,.6), 0 0 16px rgba(240,208,32,.5), 0 0 8px var(--accent-glow); }
+.rk-S{ background:var(--yellow); box-shadow:3px 3px 0 rgba(0,0,0,.6), 0 0 26px var(--yellow), 0 0 14px var(--accent-glow); animation:rkPulseS 1.6s ease-in-out infinite; }
+@keyframes rkPulseS{ 0%,100%{ box-shadow:3px 3px 0 rgba(0,0,0,.6), 0 0 26px var(--yellow), 0 0 14px var(--accent-glow);} 50%{ box-shadow:3px 3px 0 rgba(0,0,0,.6), 0 0 40px var(--yellow), 0 0 22px var(--accent-glow);} }
+
+/* 22/23 PANAL — 2 filas, hexágonos pointy-top (planos a los lados) pegados, estilo prop3 */
+.honeynest{ width:196px; max-width:100%; }
+.hexrow{ display:flex; }
+.hexrow:nth-child(2){ margin-top:-14px; transform:translateX(24px); }
+.hex{ width:48px; height:55px; flex-shrink:0; margin-right:0; font-size:18px; filter:grayscale(.7) brightness(.75);
+  clip-path:polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+  background:linear-gradient(160deg,rgba(229,30,45,.10),rgba(20,5,7,.92)); border:2px solid rgba(229,30,45,.35);
+  display:flex; align-items:center; justify-content:center; cursor:pointer; opacity:.5; transition:.18s; }
+.hex svg{ width:20px; height:20px; stroke:var(--white); fill:none; stroke-width:1.8; opacity:.6; transition:.18s; }
+.hex.done{ opacity:1; background:linear-gradient(160deg,rgba(229,30,45,.42),rgba(40,8,10,.96)); border-color:var(--accent); filter:none; }
+.hex.done svg{ stroke:var(--white); opacity:1; }
+.hex:hover{ transform:translateY(-2px); }
+.hex.pop{ animation:hp .35s; }
+@keyframes hp{ 0%{transform:scale(1);} 50%{transform:scale(1.3) rotate(-4deg);} 100%{transform:scale(1);} }
+.honey-cap{ font-family:var(--f-mono); font-size:9.5px; color:#b8b3a8; margin-top:8px; }
+.honey-cap b{ color:var(--accent); }
+
+.entrega-mini{ display:flex; align-items:center; gap:8px; }
+.entrega-mini .ic{ font-size:15px; flex-shrink:0; }
+.entrega-mini .txt{ font-family:var(--f-mono); font-size:10px; color:var(--paper); }
+.entrega-mini .txt b{ display:block; font-family:'Archivo Black',sans-serif; font-size:12.5px; color:var(--yellow); margin-bottom:2px; }
+
+/* 25/26 URGENTE — estilo prop4 (bloques planos), fila estilo prop3, números destacados como imagen 4 */
+.urow{ display:flex; justify-content:space-between; align-items:center; padding:8px 11px; border:1px solid rgba(245,242,236,.14); background:rgba(245,242,236,.04); margin-bottom:5px; font-family:var(--f-mono); font-size:10.5px; color:var(--paper); cursor:pointer; }
+.urow:last-child{ margin-bottom:0; }
+.urow .u-num{ display:flex; align-items:baseline; gap:3px; }
+.urow .u-num b{ font-family:'Archivo Black',sans-serif; font-size:19px; color:var(--yellow); line-height:1; }
+.urow .u-num span{ font-family:var(--f-mono); font-size:8.5px; color:#8a8580; }
+.urow b.overdue-tag{ color:#ff8a3d; font-family:'Archivo Black',sans-serif; font-size:12px; text-decoration:underline; text-shadow:0 0 8px rgba(255,90,31,.6); }
+.urow.overdue{ border-color:#ff5a1f; background:linear-gradient(90deg, rgba(255,90,31,.22), rgba(179,0,27,.18)); animation:shake 2.4s infinite; }
+.urow.overdue span{ color:#fff; }
+.urow.done{ opacity:.35; text-decoration:line-through; }
+@keyframes shake{ 0%,90%,100%{transform:translateX(0);} 92%{transform:translateX(-3px);} 96%{transform:translateX(3px);} }
+
+/* 27/28 FECHAS — estilo prop4, fila con borde de prop3, números destacados como imagen 4 */
+.drow{ display:flex; justify-content:space-between; align-items:center; padding:7px 10px; border:1px solid rgba(245,242,236,.14); margin-bottom:5px; font-family:var(--f-mono); font-size:10.5px; color:var(--paper); }
+.drow:last-child{ margin-bottom:0; }
+.drow .d-num{ display:flex; align-items:baseline; gap:3px; }
+.drow .d-num b{ font-family:'Archivo Black',sans-serif; font-size:19px; color:var(--yellow); line-height:1; }
+.drow .d-num span{ font-family:var(--f-mono); font-size:8.5px; color:#8a8580; }
+
+/* ===================== 29. LEVEL UP — rediseñado, relacionado a rango/hábitos ===================== */
+#levelUp{ position:fixed; top:12vh; left:50%; transform:translate(-50%,-20px) scale(.8) rotate(-4deg); z-index:200; opacity:0; pointer-events:none; text-align:center; }
+#levelUp.show{ animation:lvlUp 2.1s cubic-bezier(.2,.9,.15,1.2) forwards; }
+.lu-rank{ font-family:var(--f-display); font-size:clamp(60px,10vw,120px); color:var(--yellow); -webkit-text-stroke:4px var(--black); filter:drop-shadow(6px 6px 0 var(--accent)) drop-shadow(0 0 30px var(--yellow)); line-height:1; }
+.lu-text{ font-family:'Archivo Black',sans-serif; font-size:clamp(18px,2.6vw,28px); color:var(--white); text-transform:uppercase; letter-spacing:.15em; margin-top:2px; background:var(--black); border:2px solid var(--yellow); display:inline-block; padding:6px 20px; }
+.lu-sub{ font-family:var(--f-mono); font-size:11px; color:var(--paper); letter-spacing:.15em; margin-top:8px; }
+@keyframes lvlUp{
+  0%{opacity:0; transform:translate(-50%,-20px) scale(.6) rotate(-8deg);}
+  14%{opacity:1; transform:translate(-50%,0) scale(1.15) rotate(3deg);}
+  24%{transform:translate(-50%,0) scale(1) rotate(-1deg);}
+  30%{transform:translate(-50%,0) scale(1.06) rotate(1deg);}
+  36%{transform:translate(-50%,0) scale(1) rotate(0);}
+  85%{opacity:1;}
+  100%{opacity:0; transform:translate(-50%,-10px) scale(.95) rotate(0deg);}
+}
+
+.flash{ position:fixed; inset:0; background:var(--white); opacity:0; pointer-events:none; z-index:900; }
+.flash.on{ animation:flashOn .18s ease-out; }
+@keyframes flashOn{ 0%{opacity:.75;} 100%{opacity:0;} }
+
+@media(max-width:900px){
+  html,body{ height:auto; overflow-y:auto; }
+  .page{ flex-direction:column; height:auto; }
+  .content{ padding:4vh 5vw; min-width:0; }
+  .right-col{ width:100%; min-width:0; padding:0 5vw 4vh; }
+  .top-row{ flex-direction:column; }
+  .hud-status{ text-align:left; align-items:flex-start; }
+  .hud-top{ justify-content:flex-start; }
+  .rail-wrap{ height:170px; }
+  .railCard{ width:110px; height:135px; }
+  .widgets-row{ flex-direction:column; }
+  .w-col{ max-width:100%; flex:none; }
+  .w-col:first-child{ flex:none; max-width:100%; }
+  .areas-grid{ grid-template-columns:repeat(auto-fill,minmax(140px,1fr)); grid-auto-rows:170px; }
+}
+
+/* ===================== 31. SUBVISTAS — transición, título tipo sticker prop1 + fuente/color prop5 ===================== */
+.subview{ position:fixed; inset:0; z-index:80; background:var(--black); display:none; overflow-y:auto; opacity:0; transform:translateY(24px); transition:opacity .35s ease, transform .35s cubic-bezier(.2,.9,.2,1); }
+.subview.open{ display:block; }
+.subview.show{ opacity:1; transform:translateY(0); }
+.subview-head{ display:flex; justify-content:space-between; align-items:center; padding:5vh 6vw 2vh; }
+.subview-back{ font-family:var(--f-mono); font-size:12px; color:var(--paper); cursor:pointer; letter-spacing:.15em; }
+.subview-back:hover{ color:var(--accent); }
+.subview-title{ display:flex; gap:2px; flex-wrap:wrap; }
+.subview-title b{ font-family:'Permanent Marker',cursive; color:var(--accent); font-size:clamp(24px,4.4vw,44px); display:inline-block; -webkit-text-stroke:1.5px var(--white); paint-order:stroke fill; }
+.subview-title b:nth-child(odd){ transform:rotate(-3deg) translateY(-2px); }
+.subview-title b:nth-child(even){ transform:rotate(2deg) translateY(3px); }
+.subview-desc{ padding:0 6vw 3vh; font-family:var(--f-mono); font-size:12px; color:#b8b3a8; max-width:640px; line-height:1.7; }
+.subview-desc .tag{ display:inline-block; font-family:var(--f-mono); font-size:9.5px; color:var(--yellow); border:1px dashed var(--yellow); padding:3px 9px; margin-bottom:10px; letter-spacing:.1em; }
+
+.areas-grid{ display:grid; grid-template-columns:repeat(7, 1fr); grid-auto-rows:300px; gap:12px; padding:1vh 4vw 8vh; }
+.area-card{ position:relative; border-radius:2px; padding:12px; cursor:pointer; overflow:hidden; display:flex; flex-direction:column; justify-content:space-between; transition:transform .15s; border:1px solid rgba(255,255,255,.06); }
+.area-card:hover{ transform:translateY(-4px); }
+.area-card .row-top{ display:flex; justify-content:space-between; align-items:flex-start; }
+.area-card .mod{ font-family:var(--f-mono); font-size:9px; color:rgba(255,255,255,.55); letter-spacing:.05em; }
+.area-card .img-btn{ display:flex; align-items:center; gap:4px; border:1px solid var(--yellow); color:var(--yellow); font-family:var(--f-mono); font-size:8px; padding:2px 6px; letter-spacing:.05em; }
+.area-card .nm{ font-family:'Archivo Black',sans-serif; font-size:16px; color:#fff; text-transform:uppercase; }
+.area-card .st{ font-family:var(--f-mono); font-size:9.5px; color:rgba(255,255,255,.5); margin-top:2px; }
+
+.stub-body{ padding:2vh 6vw 8vh; font-family:var(--f-mono); font-size:12px; color:#b8b3a8; max-width:600px; line-height:1.7; }
+.goal-row{ display:flex; justify-content:space-between; align-items:center; padding:12px 16px; background:#141014; border:1px solid rgba(245,242,236,.12); margin-bottom:10px; max-width:600px; }
+.goal-row b{ font-family:var(--f-display); font-size:14px; color:var(--white); display:block; }
+.goal-row span{ font-family:var(--f-mono); font-size:10.5px; color:#8a8580; }
+.goal-row .pct{ font-family:var(--f-display); font-size:22px; color:var(--accent); }
+
+.build-tag{ position:fixed; bottom:8px; left:8px; z-index:99; font-family:var(--f-mono); font-size:9px; color:#555; }
+.toast{ position:fixed; bottom:20px; left:50%; transform:translateX(-50%) translateY(20px); background:var(--black); border:1px solid var(--accent); color:var(--white); font-family:var(--f-mono); font-size:11px; padding:9px 18px; z-index:500; opacity:0; transition:.25s; pointer-events:none; }
+.toast.show{ opacity:1; transform:translateX(-50%) translateY(0); }
+
+/* ===== LOGIN GATE ===== */
+#loginGate{ position:fixed; inset:0; z-index:1000; background:var(--black); display:flex; align-items:center; justify-content:center; }
+#loginGate .halftone{ display:block; }
+.login-box{ position:relative; z-index:2; width:min(340px, 86vw); padding:34px 30px; background:#141014; border:1px solid rgba(245,242,236,.14); }
+.login-box .eyebrow{ opacity:1; animation:none; }
+.login-box h1{ font-family:var(--f-display); font-size:30px; color:var(--white); margin:6px 0 20px; letter-spacing:.02em; }
+.login-box input{ width:100%; background:var(--black); border:1px solid rgba(245,242,236,.18); color:var(--white); font-family:var(--f-mono); font-size:13px; padding:12px 14px; margin-bottom:12px; outline:none; }
+.login-box input:focus{ border-color:var(--accent); }
+.login-box button{ width:100%; background:var(--accent); border:none; color:var(--white); font-family:var(--f-display); font-size:15px; letter-spacing:.05em; padding:13px; cursor:pointer; margin-top:6px; }
+.login-box button:hover{ filter:brightness(1.1); }
+.login-box .err{ color:var(--accent); font-family:var(--f-mono); font-size:11px; margin-top:10px; min-height:14px; }
+#appRoot{ display:none; }
+</style>
+</head>
+<body>
+<div id="loginGate">
+  <div class="halftone"></div>
+  <div class="login-box">
+    <div class="eyebrow">MI SISTEMA — MI VIDA</div>
+    <h1>ENTRAR</h1>
+    <input type="email" id="loginEmail" placeholder="correo" autocomplete="username">
+    <input type="password" id="loginPass" placeholder="contraseña" autocomplete="current-password">
+    <button id="loginBtn">ENTRAR</button>
+    <div class="err" id="loginErr"></div>
+  </div>
+</div>
+<div id="appRoot">
+<div class="bg-tear"></div>
+<div class="halftone"></div>
+<div class="halftone2"></div>
+
+<div class="page">
+  <div class="content">
+
+    <div class="eyebrow">MI SISTEMA — MI VIDA</div>
+    <div class="eyebrow-sub">Mi mejor versión en curso...</div>
+    <div class="title" id="titleEl" onclick="hitTitle()"><span>HAZLO</span><span>REAL</span></div>
+    <div class="greeting"><span class="icon" id="greetIcon">☀️</span><span class="txt" id="greetText">BUENOS DÍAS, ZUKI.</span></div>
+    <div class="frase-dia" id="fraseDia">"..."</div>
+
+    <div id="ctxBanner">
+      <span class="ctx-ic">⚠</span>
+      <span class="ctx-txt" id="ctxText"><b>No olvides pagar la luz</b> — vence hoy.</span>
+    </div>
+
+    <div id="weekProg" onclick="bumpWeek()">
+      <div class="wp-head"><span class="wp-lbl">Progreso semanal</span><span class="wp-pct"><span id="wpPctNum">71</span>%</span></div>
+      <div class="wp-track"><div class="wp-fill" id="wpFill" style="width:71%"></div></div>
+      <div class="wp-hint">5 de 7 días con hábitos completos · clic para ver avanzar (demo)</div>
+    </div>
+
+    <nav id="menu">
+      <div class="item" onclick="openView('objetivosView')"><span class="num-stamp">01</span><div class="stickwrap"><span class="label sticker" data-txt="Objetivos"></span><span class="sub">0% del mes</span></div></div>
+      <div class="item" onclick="openView('calView')"><span class="num-stamp">02</span><div class="stickwrap"><span class="label sticker" data-txt="Calendario"></span><span class="sub">fechas límite y metas</span></div></div>
+      <div class="item" onclick="openView('areasView')"><span class="num-stamp">03</span><div class="stickwrap"><span class="label sticker" data-txt="Ver áreas ↳"></span><span class="sub">14 en total</span></div></div>
+      <div class="item" onclick="openView('notasView')"><span class="num-stamp">04</span><div class="stickwrap"><span class="label sticker" data-txt="Notas rápidas"></span><span class="sub">apuntar antes de olvidar</span></div></div>
+      <div class="item" onclick="openView('mejorasView')"><span class="num-stamp">05</span><div class="stickwrap"><span class="label sticker" data-txt="Mejoras"></span><span class="sub">ideas y pendientes</span></div></div>
+    </nav>
+  </div>
+
+  <div class="right-col">
+    <div class="top-row">
+      <div class="peso-chip">
+        <div class="row1"><span class="ic">⚖</span><span class="main" id="pesoActual">97.2kg</span><span class="tag">último registro</span><span class="falta" id="pesoFalta">faltan 1.2kg</span></div>
+        <div class="month-track"><div class="fill" id="monthFill" style="width:20%"></div><div class="tick" style="left:25%"></div><div class="tick" style="left:50%"></div><div class="tick" style="left:75%"></div></div>
+        <div class="month-cap"><span>Meta mensual: 96kg</span><span id="weekOfMonth">arranque: lun 27-jul</span></div>
+      </div>
+      <div class="hud-status">
+        <div class="hud-top">
+          <div class="style-btn" onclick="cyclePreset()"><span class="style-ic">🎨</span><span class="style-lbl" id="presetLabel">PS CLÁSICO</span></div>
+          <div class="hud-clock" id="hudClock">19:42</div>
+        </div>
+        <div id="hudFecha">17 JUL 2026 · MIÉ</div>
+        <div>⛅ 19°C SANTIAGO</div>
+        <div class="streak-inline" id="streakWrap"><span class="flame">🔥</span><span class="num" id="streakNum">42</span></div>
+        <div class="sync" id="syncBox" onclick="cycleSync()"><span class="dot"></span><span id="syncLabel">sincronizado — cel &amp; pc</span></div>
+      </div>
+    </div>
+
+    <!-- 18/19 RAIL 14 módulos -->
+    <div class="rail-wrap">
+      <div id="rail"><div id="railTrack"></div></div>
+    </div>
+
+    <div class="widgets-row">
+      <div class="w-col">
+        <div class="card-wrap">
+          <div class="rk-stamp" id="rkBadge"><span id="rkLetter">S</span></div>
+          <div class="card">
+            <div class="card-title-p4">Hábitos hoy</div>
+            <div class="card-body">
+              <div class="honeynest" id="hive">
+                <div class="hexrow">
+                  <div class="hex" data-id="levantarse" data-emoji="⚡" title="Levantarse en &lt;10 min"></div><div class="hex" data-id="ayuno" data-emoji="⏱️" title="Ayuno 14–16h"></div>
+                  <div class="hex" data-id="saludable" data-emoji="🥗" title="Come saludable"></div><div class="hex" data-id="agua8" data-emoji="💧" title="8 vasos de agua"></div><div class="hex" data-id="pies" data-emoji="🦶" title="Cuidado pies"></div>
+                </div>
+                <div class="hexrow">
+                  <div class="hex" data-id="modul" data-emoji="🎙️" title="Modulación vocal"></div><div class="hex" data-id="aprender" data-emoji="📖" title="Aprender / leer"></div>
+                  <div class="hex" data-id="tiktoks" data-emoji="📱" title="Revisar guardados"></div><div class="hex" data-id="sueno" data-emoji="😴" title="Buenas horas de sueño"></div>
+                </div>
+              </div>
+              <div class="honey-cap"><b id="hiveCount">0</b> de 9 celdas encendidas · clic para marcar</div>
+            </div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-title-p4">Próxima entrega</div>
+          <div class="card-body">
+            <div class="entrega-mini"><span class="ic">✏️</span><div class="txt"><b>Guion cap. 3</b>vence en 5 días · boceto adjunto</div></div>
+          </div>
+        </div>
+      </div>
+      <div class="w-col">
+        <div class="card">
+          <div class="card-title-p4">Urgente — top 3</div>
+          <div class="card-body">
+            <div class="urow overdue" onclick="this.classList.toggle('done')"><span>⚠ Pagar luz</span><b class="overdue-tag">venció ayer</b></div>
+            <div class="urow" onclick="this.classList.toggle('done')"><span>📌 Enviar CV</span><div class="u-num"><b>3</b><span>días</span></div></div>
+            <div class="urow" onclick="this.classList.toggle('done')"><span>🩺 Control médico</span><div class="u-num"><b>9</b><span>días</span></div></div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-title-p4">Fechas importantes</div>
+          <div class="card-body">
+            <div class="drow"><span>🎂 Cumpleaños Gowi</span><div class="d-num"><b>12</b><span>días</span></div></div>
+            <div class="drow"><span>📄 Vence permiso</span><div class="d-num"><b>20</b><span>días</span></div></div>
+            <div class="drow"><span>🦷 Control dental</span><div class="d-num"><b>35</b><span>días</span></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="levelUp">
+  <div class="lu-rank" id="luRank">S</div>
+  <div class="lu-text" id="luText">RANGO S ALCANZADO</div>
+  <div class="lu-sub" id="luSub">COMPLETASTE TODOS TUS HÁBITOS DE HOY</div>
+</div>
+<div class="flash" id="flash"></div>
+<div class="toast" id="toast"></div>
+<div class="build-tag">MASTER V2 — COMPLETO (puntos 1–32)</div>
+
+<!-- SUBVISTAS -->
+<div class="subview" id="objetivosView">
+  <div class="subview-head"><div class="subview-back" onclick="closeView('objetivosView')">← VOLVER AL HOME</div><div class="subview-title" data-txt="OBJETIVOS"></div><div></div></div>
+  <div class="subview-desc"><span class="tag">EN CONSTRUCCIÓN</span><br>Atajo para mantener presentes los objetivos activos de este mes. Por ahora solo trae los de Cuerpo &amp; Salud (única área con objetivos definidos); las demás se sumarán cuando existan.</div>
+  <div class="goal-row"><div><b>Bajar a 96kg</b><span>Cuerpo &amp; Salud · julio</span></div><div class="pct">0%</div></div>
+  <div class="goal-row"><div><b>Definir rutina de ejercicios completa</b><span>Cuerpo &amp; Salud · julio</span></div><div class="pct">0%</div></div>
+  <div class="goal-row"><div><b>Registrar el lunes el primer peso oficial + foto</b><span>Cuerpo &amp; Salud · julio</span></div><div class="pct">0%</div></div>
+  <div class="goal-row"><div><b>Comenzar tratamiento hongos pies</b><span>Cuerpo &amp; Salud · julio</span></div><div class="pct">0%</div></div>
+  <div class="goal-row"><div><b>Cuerpo&amp;Salud 100% funcional en cel y web</b><span>Cuerpo &amp; Salud · julio</span></div><div class="pct">0%</div></div>
+</div>
+<div class="subview" id="areasView">
+  <div class="subview-head"><div class="subview-back" onclick="closeView('areasView')">← VOLVER AL HOME</div><div class="subview-title" data-txt="ÁREAS"></div><div></div></div>
+  <div class="areas-grid" id="areasGrid"></div>
+</div>
+<div class="subview" id="calView">
+  <div class="subview-head"><div class="subview-back" onclick="closeView('calView')">← VOLVER AL HOME</div><div class="subview-title" data-txt="CALENDARIO"></div><div></div></div>
+  <div class="subview-desc"><span class="tag">EN CONSTRUCCIÓN</span><br>Panel separado del home: fechas límite, metas y fechas importantes en un solo lugar.</div>
+</div>
+<div class="subview" id="mejorasView">
+  <div class="subview-head"><div class="subview-back" onclick="closeView('mejorasView')">← VOLVER AL HOME</div><div class="subview-title" data-txt="MEJORAS"></div><div></div></div>
+  <div class="subview-desc"><span class="tag">EN CONSTRUCCIÓN</span><br>Acá vas a ir guardando ideas, pendientes y cosas que se te ocurran sobre el proyecto mismo.</div>
+</div>
+<div class="subview" id="notasView">
+  <div class="subview-head"><div class="subview-back" onclick="closeView('notasView')">← VOLVER AL HOME</div><div class="subview-title" data-txt="NOTAS"></div><div></div></div>
+  <div class="subview-desc"><span class="tag">EN CONSTRUCCIÓN</span><br>Apuntes rápidos tipo "idea antes de que se me olvide". Se gestionan después en el área Segundo Cerebro.</div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+/* ===== CONEXIÓN A LA BASE DE DATOS (Supabase) ===== */
+const SUPABASE_URL = 'https://psxaezztturbzlesoqsy.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_UF9zjIrCSGtimKFD8XY15w_AhQ-z5qC';
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+function todayISO(){
+  const d = new Date();
+  return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+}
+
+/* Metas de peso fijas por mes, ya confirmadas en el plan (jul→dic 2026) */
+const MONTH_GOALS = {7:96, 8:92.5, 9:88.5, 10:85.5, 11:82.5, 12:80};
+
+/* ===== SONIDO base (prop1) ===== */
+let actx;
+function ctx(){ if(!actx) actx = new (window.AudioContext||window.webkitAudioContext)(); return actx; }
+function blip(freq=880, dur=.08, type='square', vol=.05){
+  const c = ctx(); const o = c.createOscillator(); const g = c.createGain();
+  o.type = type; o.frequency.value = freq;
+  g.gain.setValueAtTime(vol, c.currentTime); g.gain.exponentialRampToValueAtTime(.0001, c.currentTime+dur);
+  o.connect(g); g.connect(c.destination); o.start(); o.stop(c.currentTime+dur);
+}
+document.body.addEventListener('click', ()=>{ ctx(); }, {once:true});
+
+function showToast(msg){
+  const t = document.getElementById('toast'); t.textContent = msg; t.classList.add('show');
+  clearTimeout(window._toastT); window._toastT = setTimeout(()=>t.classList.remove('show'), 2200);
+}
+
+/* sticker letters menú */
+document.querySelectorAll('.sticker').forEach(el=>{
+  const txt = el.getAttribute('data-txt');
+  el.innerHTML = [...txt].map(ch=>`<b>${ch===' '?'&nbsp;':ch}</b>`).join('');
+});
+/* sticker letters títulos de subvista */
+document.querySelectorAll('.subview-title').forEach(el=>{
+  const txt = el.getAttribute('data-txt');
+  el.innerHTML = [...txt].map(ch=>`<b>${ch===' '?'&nbsp;':ch}</b>`).join('');
+});
+
+document.getElementById('titleEl').addEventListener('animationend', function(e){ if(e.animationName==='slamIn') this.style.opacity='1'; });
+function hitTitle(){
+  const t = document.getElementById('titleEl');
+  t.style.opacity = '1';
+  t.classList.remove('punch'); void t.offsetWidth; t.classList.add('punch');
+  blip(140,.08,'sawtooth',.06); setTimeout(()=>blip(420,.1,'square',.05),50);
+}
+
+const NOMBRE = "ZUKI";
+const greetings = {
+  morning:[['☀️',`BUENOS DÍAS, ${NOMBRE} — A MOVERSE.`],['🌅',`ARRIBA, ${NOMBRE}. HOY SE AVANZA.`]],
+  afternoon:[['🌤️',`BUENAS TARDES, ${NOMBRE} — SIGUE ASÍ.`],['⚡',`MITAD DEL DÍA. NO AFLOJES, ${NOMBRE}.`]],
+  evening:[['🌆',`BUENAS NOCHES, ${NOMBRE} — CIERRA FUERTE.`],['🌙','LA NOCHE ES PARA ORDENAR TODO.']],
+  night:[['🌌',`TARDE, ${NOMBRE}. DESCANSA CUANDO PUEDAS.`],['✨','MODO NOCTURNO. CUIDA EL SUEÑO.']]
+};
+const hNow = new Date().getHours();
+let bracket = hNow<12?'morning':(hNow<19?'afternoon':(hNow<23?'evening':'night'));
+const pick = greetings[bracket][Math.floor(Math.random()*greetings[bracket].length)];
+document.getElementById('greetIcon').textContent = pick[0];
+document.getElementById('greetText').textContent = pick[1];
+
+const FRASES = [
+"El progreso no se nota día a día, se nota a los tres meses.","Disciplina es hacerlo aunque ya no tengas ganas.",
+"No necesitas motivación, necesitas un sistema.","Cada hábito es un voto por la persona que quieres ser. — James Clear",
+"Lo simple hecho todos los días vence a lo perfecto hecho una vez.","El descanso también es parte del entrenamiento.",
+"No compitas con ayer si hoy ya diste lo que tenías.","Un día malo no borra una racha buena.",
+"Ordenar el afuera ayuda a ordenar el adentro.","La constancia es la forma silenciosa del coraje.",
+"Mejor un paso lento que ningún paso.","Lo que se mide, se mejora.","El cansancio miente más que las excusas.",
+"Nadie ve el proceso, todos ven el resultado. Confía en el proceso.","Hazlo imperfecto, pero hazlo.",
+"Tu versión de mañana depende de lo que decidas hoy.","No se trata de tener tiempo, se trata de hacer espacio.",
+"El hábito que más cuesta empezar es el que más cambia todo.","Cuando dudes, vuelve a lo básico.",
+"La motivación te prende, el hábito te sostiene.","No busques el momento perfecto, crea el momento.",
+"Pequeños pasos, dirección correcta, sin drama.","El que se ordena, avanza; el que se apura, tropieza.",
+"Ganar es simplemente no rendirse antes de tiempo.","Haz las paces con lo lento, es lo que dura.",
+"Cada check es una promesa cumplida contigo mismo.","No es perfección, es dirección.",
+"Un 60% hecho hoy vale más que un 100% planeado para nunca.","El orden externo baja el ruido interno.",
+"Tu racha no mide perfección, mide compromiso.","Lo que no anotas, se olvida. Lo que se olvida, no cuenta.",
+"El descanso planificado no es fallar, es sostener.","Avanza aunque sea al 20%, el 0% no suma nunca.",
+"El futuro se construye en la rutina de hoy, no en la epifanía de mañana.","No te compares con el nivel diez si vas en el nivel dos.",
+"Cada área de tu vida que ordenas, te da espacio en otra.","Ser constante importa más que ser intenso.",
+"El mejor plan es el que sí sigues, no el más ambicioso.","Hazlo por la versión tuya que lo va a agradecer en un año.",
+"La calma también es productividad.","No se trata de hacerlo todo, se trata de no soltar lo importante.",
+"Cuidar tu cuerpo es la base de todo lo demás.","Cada meta pequeña cumplida entrena tu confianza para la grande.",
+"Cuando falles un día, vuelve al día siguiente, no en una semana.","El orden no es rigidez, es libertad con estructura.",
+"Lo que haces en automático hoy, lo decidiste con esfuerzo ayer.","No hay racha perfecta, hay racha que se sostiene.",
+"Registra tu progreso, no tu perfección.","El hábito más pequeño bien hecho vale más que el plan grande sin empezar.",
+"Tu energía de hoy es una inversión, no un gasto.","Avanzar despacio sigue siendo avanzar.",
+"No necesitas sentirte listo para empezar, solo necesitas empezar.","El mejor día para retomar algo es hoy, no lunes.",
+"Cuidar los detalles chicos evita los quiebres grandes.","No es magia, es mantenimiento.",
+"Tu disciplina de hoy es el descanso de tu yo futuro.","Un sistema simple que sigues gana a un sistema perfecto que abandonas.",
+"El progreso real casi nunca se siente dramático.","Vuelve a empezar las veces que haga falta, eso también es constancia.",
+"Lo que cuidas, crece. Lo que ignoras, se estanca."
+];
+function fraseDelDia(){
+  const key='fraseMes'; const now=new Date(); const monthKey=now.getFullYear()+'-'+now.getMonth();
+  let store; try{ store = JSON.parse(localStorage.getItem(key)||'null'); }catch(e){ store=null; }
+  if(!store || store.month!==monthKey || !Array.isArray(store.pool) || store.pool.length===0){
+    const pool = FRASES.map((_,i)=>i);
+    for(let i=pool.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [pool[i],pool[j]]=[pool[j],pool[i]]; }
+    store = { month: monthKey, pool };
+  }
+  const idx = store.pool.pop();
+  try{ localStorage.setItem(key, JSON.stringify(store)); }catch(e){}
+  return FRASES[idx];
+}
+document.getElementById('fraseDia').textContent = '"'+fraseDelDia()+'"';
+
+const diasV=['DOM','LUN','MAR','MIÉ','JUE','VIE','SÁB'], mesesV=['ENE','FEB','MAR','ABR','MAY','JUN','JUL','AGO','SEP','OCT','NOV','DIC'];
+function tickClock(){ const n = new Date(); document.getElementById('hudClock').textContent = String(n.getHours()).padStart(2,'0')+':'+String(n.getMinutes()).padStart(2,'0'); document.getElementById('hudFecha').textContent = n.getDate()+' '+mesesV[n.getMonth()]+' '+n.getFullYear()+' · '+diasV[n.getDay()]; }
+tickClock(); setInterval(tickClock, 15000);
+
+const STREAK_THRESHOLDS = [7,14,21,28,60,90,150,270,365];
+function applyStreakTier(days){
+  const wrap = document.getElementById('streakWrap'); wrap.className = 'streak-inline';
+  let tier = 0; STREAK_THRESHOLDS.forEach((th,i)=>{ if(days>=th) tier = i+1; });
+  if(tier>0) wrap.classList.add('streak-t'+tier);
+  document.getElementById('streakNum').textContent = days;
+}
+applyStreakTier(42);
+
+const syncStates=[{c:'',l:'sincronizado — cel & pc'},{c:'syncing',l:'sincronizando…'},{c:'offline',l:'sin conexión — guardado local'}];
+let syncIdx=0;
+function cycleSync(){ syncIdx=(syncIdx+1)%syncStates.length; const box=document.getElementById('syncBox'); box.className='sync '+syncStates[syncIdx].c; document.getElementById('syncLabel').textContent=syncStates[syncIdx].l; }
+
+const PRESETS = [
+  { name:'PS CLÁSICO', accent:'#e51e2d', glow:'rgba(229,30,45,.5)', font:"'Anton',sans-serif" },
+  { name:'NEÓN ÁMBAR', accent:'#f0a020', glow:'rgba(240,160,32,.5)', font:"'Bebas Neue',sans-serif" },
+  { name:'VIOLETA NOIR', accent:'#9b30ff', glow:'rgba(155,48,255,.5)', font:"'Archivo Black',sans-serif" },
+  { name:'VERDE TÁCTICO', accent:'#2ecf6b', glow:'rgba(46,207,107,.5)', font:"'Big Shoulders Display',sans-serif" },
+  { name:'AZUL ELÉCTRICO', accent:'#2196f3', glow:'rgba(33,150,243,.5)', font:"'Anton',sans-serif" }
+];
+let presetIdx = 0;
+function cyclePreset(){
+  presetIdx = (presetIdx+1)%PRESETS.length; const p = PRESETS[presetIdx];
+  document.documentElement.style.setProperty('--accent', p.accent);
+  document.documentElement.style.setProperty('--accent-glow', p.glow);
+  document.documentElement.style.setProperty('--f-display', p.font);
+  document.getElementById('presetLabel').textContent = p.name;
+  blip(700,.05,'square',.04);
+}
+
+const ctxMsgs = [
+  '<b>No olvides pagar la luz</b> — vence hoy.','<b>Vas en racha de 42 días</b> — no la cortes.',
+  '<b>Bajaste 0.4kg esta semana</b> — vas directo a la meta.','<b>Alcanzaste el 90% del mes</b> en Objetivos.'
+];
+let ctxIdx=0;
+setInterval(()=>{ ctxIdx=(ctxIdx+1)%ctxMsgs.length; const el=document.getElementById('ctxText'); el.style.opacity=0; setTimeout(()=>{ el.innerHTML=ctxMsgs[ctxIdx]; el.style.opacity=1; },250); }, 6000);
+
+let wpVal = 71;
+function bumpWeek(){
+  if(wpVal>=100) return;
+  wpVal = Math.min(100, wpVal+7);
+  document.getElementById('wpFill').style.width = wpVal+'%';
+  document.getElementById('wpPctNum').textContent = wpVal;
+  blip(500,.05,'square',.03);
+  if(wpVal>=100) triggerWeekCelebration();
+}
+function triggerWeekCelebration(){
+  document.getElementById('luRank').textContent = '★';
+  document.getElementById('luRank').style.opacity = '1';
+  document.getElementById('luRank').style.fontSize = '';
+  document.getElementById('luText').textContent = 'SEMANA COMPLETA';
+  document.getElementById('luSub').textContent = '100% DE LA SEMANA LOGRADO';
+  const lu = document.getElementById('levelUp'); lu.classList.remove('show'); void lu.offsetWidth; lu.classList.add('show');
+  blip(200,.12,'sawtooth',.06); setTimeout(()=>blip(500,.14,'triangle',.06),80); setTimeout(()=>blip(900,.18,'sine',.05),160);
+}
+
+/* ===== 18/19 RAIL: 14 áreas con SVG simples e íconos referenciales ===== */
+const ICONS = {
+  cuerpo:'<path d="M4 12h3M17 12h3M7 8v8M17 8v8"/>',
+  nutricion:'<path d="M4 20l6-6M14 4l6 6-10 10H4v-6z"/>',
+  finanzas:'<path d="M12 2v20M8 6h6a3 3 0 010 6H9a3 3 0 000 6h7"/>',
+  trabajo:'<path d="M6 3l12 18M18 3L6 21"/>',
+  cerebro:'<circle cx="12" cy="12" r="8"/><path d="M12 4v8l5 3"/>',
+  arte:'<path d="M4 20l6-6M14 4l6 6-10 10H4v-6z"/>',
+  ocio:'<rect x="3" y="8" width="18" height="9" rx="3"/><circle cx="8" cy="12" r="1"/><circle cx="16" cy="12" r="1"/>',
+  objetivos:'<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4"/>',
+  productividad:'<path d="M4 6h16M4 12h16M4 18h10"/>',
+  bienestar:'<path d="M12 21s-8-4.5-8-11a5 5 0 019-3 5 5 0 019 3c0 6.5-8 11-8 11z"/>',
+  relaciones:'<path d="M8 12h8M8 12a4 4 0 010-8M16 12a4 4 0 000-8"/>',
+  emprendimiento:'<path d="M3 17l6-6 4 4 8-8"/><path d="M15 7h6v6"/>',
+  redes:'<circle cx="6" cy="12" r="2.5"/><circle cx="18" cy="6" r="2.5"/><circle cx="18" cy="18" r="2.5"/><path d="M8.2 10.8L15.8 7.2M8.2 13.2L15.8 16.8"/>',
+  tecnico:'<path d="M9 3v3M15 3v3M9 18v3M15 18v3M3 9h3M3 15h3M18 9h3M18 15h3"/><rect x="6" y="6" width="12" height="12" rx="2"/>'
+};
+const AREAS = [
+  {mod:'01',nm:'Cuerpo & Salud',st:'97.2kg · 0/9 hábitos',ic:'cuerpo',id:'cuerpo'},
+  {mod:'02',nm:'Nutrición',st:'plan semanal ok',ic:'nutricion',id:'nutricion'},
+  {mod:'03',nm:'Finanzas',st:'presupuesto ok',ic:'finanzas',id:'finanzas'},
+  {mod:'04',nm:'Trabajo',st:'2 postulaciones',ic:'trabajo',id:'trabajo'},
+  {mod:'05',nm:'2º Cerebro',st:'5 notas nuevas',ic:'cerebro',id:'cerebro'},
+  {mod:'06',nm:'Arte',st:'escultura 40%',ic:'arte',id:'arte'},
+  {mod:'07',nm:'Ocio',st:'2 pendientes',ic:'ocio',id:'ocio'},
+  {mod:'08',nm:'Objetivos',st:'4/7 semanales',ic:'objetivos',id:'objetivos'},
+  {mod:'09',nm:'Productividad',st:'al día',ic:'productividad',id:'productividad'},
+  {mod:'10',nm:'Bienestar',st:'chequeo pendiente',ic:'bienestar',id:'bienestar'},
+  {mod:'11',nm:'Relaciones',st:'1 cumpleaños',ic:'relaciones',id:'relaciones'},
+  {mod:'12',nm:'Emprendimiento',st:'idea en curso',ic:'emprendimiento',id:'emprendimiento'},
+  {mod:'13',nm:'Redes Sociales',st:'sin revisar',ic:'redes',id:'redes'},
+  {mod:'14',nm:'Func. Técnica',st:'diseño 55%',ic:'tecnico',id:'tecnico'}
+];
+const railTrack = document.getElementById('railTrack');
+function buildRail(){
+  railTrack.innerHTML='';
+  [...AREAS, ...AREAS].forEach(a=>{
+    const d = document.createElement('div'); d.className='railCard';
+    d.innerHTML = `<div class="in"><div class="ic"><svg viewBox="0 0 24 24">${ICONS[a.ic]}</svg></div><div><div class="mod">MOD-${a.mod}</div><div class="nm">${a.nm}</div><div class="st">${a.st}</div></div></div>`;
+    d.addEventListener('click', ()=>{
+      if(a.id==='cuerpo'){ location.href='cuerpo.html'; }
+      else { showToast(`↳ Enlace a "${a.nm}" — área aún no construida`); }
+    });
+    railTrack.appendChild(d);
+  });
+}
+buildRail();
+
+/* AREA GRID a color (subvista) — como imagen 2 */
+/* paleta calcada de la imagen de referencia: azul acero, violeta, ocre, verde, granate, café-rojizo, azul (se repite el patrón) */
+const AREA_COLORS = [
+  ['#2a4a68','#0b1420'],['#3a2560','#12082a'],['#5a4310','#241a04'],['#1a4a3a','#052018'],
+  ['#5a1a28','#2a0510'],['#5a2a12','#2a1206'],['#22405a','#081420'],['#3a2560','#12082a'],
+  ['#5a4310','#241a04'],['#1a4a3a','#052018'],['#5a1a28','#2a0510'],['#5a2a12','#2a1206'],
+  ['#22405a','#081420'],['#3a3a3a','#141414']
+];
+const areasGrid = document.getElementById('areasGrid');
+AREAS.forEach((a,i)=>{
+  const c = AREA_COLORS[i%AREA_COLORS.length];
+  const d = document.createElement('div'); d.className='area-card';
+  d.style.background = `linear-gradient(170deg, ${c[0]}, ${c[1]})`;
+  d.innerHTML = `<div class="row-top"><div class="mod">MOD-${a.mod}</div><div class="img-btn">☰ IMG</div></div><div><div class="nm">${a.nm}</div><div class="st">${a.st}</div></div>`;
+  d.addEventListener('click', ()=>{
+    if(a.id==='cuerpo'){ location.href='cuerpo.html'; }
+    else { showToast(`↳ Entrar a "${a.nm}" — pendiente de construir`); }
+  });
+  areasGrid.appendChild(d);
+});
+
+/* ===== 20-24 HÁBITOS + PANAL + RANGO (datos reales desde Supabase) ===== */
+document.querySelectorAll('.hex').forEach(hx=>{
+  const em = hx.getAttribute('data-emoji');
+  if(em) hx.textContent = em;
+});
+
+document.querySelectorAll('.hex').forEach(hx=>{
+  hx.addEventListener('click', async ()=>{
+    const id = hx.getAttribute('data-id');
+    const willBeDone = !hx.classList.contains('done');
+    hx.classList.toggle('done'); hx.classList.remove('pop'); void hx.offsetWidth; hx.classList.add('pop');
+    blip(900,.05,'square',.03); updateHiveAndRank();
+    await sb.from('habits_daily_log').upsert({ habit_id:id, date:todayISO(), done:willBeDone });
+  });
+});
+
+async function loadHabitsHoy(){
+  const { data: logs } = await sb.from('habits_daily_log').select('habit_id,done').eq('date', todayISO());
+  const doneIds = new Set((logs||[]).filter(l=>l.done).map(l=>l.habit_id));
+  document.querySelectorAll('.hex').forEach(hx=>{
+    const id = hx.getAttribute('data-id');
+    hx.classList.toggle('done', doneIds.has(id));
+  });
+  updateHiveAndRank();
+}
+
+async function loadPesoChip(){
+  const { data } = await sb.from('weight_log').select('date,weight').order('date',{ascending:false}).limit(1);
+  if(!data || !data.length) return;
+  const last = data[0];
+  const now = new Date();
+  const goal = MONTH_GOALS[now.getMonth()+1] ?? null;
+  document.getElementById('pesoActual').textContent = last.weight.toFixed(1)+'kg';
+  if(goal!=null){
+    const falta = Math.max(0, +(last.weight - goal).toFixed(1));
+    document.getElementById('pesoFalta').textContent = falta>0 ? `faltan ${falta}kg` : '¡meta del mes cumplida!';
+    document.querySelector('.month-cap span').textContent = `Meta mensual: ${goal}kg`;
+    const startWeight = 97.2; // peso de arranque del plan
+    const pctAvance = Math.min(100, Math.max(0, Math.round(((startWeight-last.weight)/(startWeight-goal))*100)));
+    document.getElementById('monthFill').style.width = pctAvance+'%';
+  }
+}
+
+async function loadStreak(){
+  const { data: logs } = await sb.from('habits_daily_log').select('date,done').eq('done', true);
+  const { data: catalog } = await sb.from('habits_daily').select('id');
+  const total = (catalog||[]).length || 9;
+  const byDate = {};
+  (logs||[]).forEach(l=>{ byDate[l.date] = (byDate[l.date]||0)+1; });
+  let streak = 0;
+  let d = new Date();
+  while(true){
+    const iso = d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+    if((byDate[iso]||0) >= total){ streak++; d.setDate(d.getDate()-1); } else break;
+  }
+  document.getElementById('streakNum').textContent = streak;
+}
+
+const RANKS = ['F','E','D','C','B','A','S'];
+let currentRankIdx = 0;
+function rankFromPct(pct){ if(pct>=90) return 6; if(pct>=75) return 5; if(pct>=60) return 4; if(pct>=45) return 3; if(pct>=30) return 2; if(pct>=15) return 1; return 0; }
+const RANK_MSG = {
+  0:['Recién arrancando.','Sigue así.'], 1:['Vas tomando forma.','Un hábito a la vez.'],
+  2:['Buen ritmo.','No lo sueltes.'], 3:['Los hábitos ya se sienten naturales.','Falta poco.'],
+  4:['Casi redondo el día.','Un empujón más.'], 5:['Un hábito para el rango perfecto.','Tan cerca.'],
+  6:['¡RANGO S ALCANZADO!','COMPLETASTE TODOS TUS HÁBITOS DE HOY']
+};
+function updateHiveAndRank(){
+  const total = document.querySelectorAll('.hex').length;
+  const done = document.querySelectorAll('.hex.done').length;
+  document.getElementById('hiveCount').textContent = done;
+  const pct = Math.round((done/total)*100);
+  const newIdx = rankFromPct(pct);
+  const badge = document.getElementById('rkBadge');
+  document.getElementById('rkLetter').textContent = RANKS[newIdx];
+  badge.className = 'rk-stamp rk-'+RANKS[newIdx];
+  if(newIdx > currentRankIdx){
+    badge.classList.add('flash');
+    setTimeout(()=>badge.classList.remove('flash'), 850);
+    triggerCelebration(newIdx);
+  }
+  currentRankIdx = newIdx;
+}
+function startApp(){
+  loadHabitsHoy();
+  loadPesoChip();
+  loadStreak();
+}
+function triggerCelebration(rankIdx){
+  const isS = rankIdx===6;
+  document.getElementById('luRank').textContent = RANKS[rankIdx];
+  document.getElementById('luRank').style.opacity = isS? '1':'.55';
+  document.getElementById('luRank').style.fontSize = isS? '':'clamp(40px,6vw,72px)';
+  document.getElementById('luText').textContent = RANK_MSG[rankIdx][0];
+  document.getElementById('luSub').textContent = RANK_MSG[rankIdx][1];
+  const lu = document.getElementById('levelUp'); lu.classList.remove('show'); void lu.offsetWidth; lu.classList.add('show');
+  if(isS){ blip(180,.14,'sawtooth',.06); setTimeout(()=>blip(440,.14,'triangle',.06),70); setTimeout(()=>blip(660,.16,'sine',.06),140); setTimeout(()=>blip(990,.22,'sine',.055),220); }
+  else{ blip(500,.1,'square',.05); setTimeout(()=>blip(760,.12,'square',.05),70); }
+}
+
+/* ===== SUBVISTAS con transición ===== */
+function openView(id){
+  const v = document.getElementById(id);
+  v.classList.add('open'); void v.offsetWidth; v.classList.add('show');
+  blip(220,.06,'sawtooth',.05); setTimeout(()=>blip(600,.09,'square',.05),40);
+  const f = document.getElementById('flash'); f.classList.remove('on'); void f.offsetWidth; f.classList.add('on');
+}
+function closeView(id){
+  const v = document.getElementById(id);
+  v.classList.remove('show');
+  setTimeout(()=> v.classList.remove('open'), 350);
+  blip(400,.06,'square',.04);
+}
+
+/* ===== LOGIN / SESIÓN ===== */
+function showApp(){
+  document.getElementById('loginGate').style.display='none';
+  document.getElementById('appRoot').style.display='block';
+  startApp();
+}
+async function doLogin(){
+  const email = document.getElementById('loginEmail').value.trim();
+  const pass = document.getElementById('loginPass').value;
+  const err = document.getElementById('loginErr');
+  err.textContent = '';
+  const { error } = await sb.auth.signInWithPassword({ email, password: pass });
+  if(error){ err.textContent = 'Correo o contraseña incorrectos.'; return; }
+  showApp();
+}
+document.getElementById('loginBtn').addEventListener('click', doLogin);
+document.getElementById('loginPass').addEventListener('keydown', e=>{ if(e.key==='Enter') doLogin(); });
+
+(async function checkSession(){
+  const { data: { session } } = await sb.auth.getSession();
+  if(session) showApp();
+})();
+</script>
+</div>
+</body>
+</html>
