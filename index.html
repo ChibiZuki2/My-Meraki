@@ -3,7 +3,13 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>MASTER V2 — COMPLETO (puntos 1–32)</title>
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#0a0a0a">
+<link rel="icon" href="/icon-192.png">
+<link rel="apple-touch-icon" href="/icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>My Merakiyo — El mapa de quien seré</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Anton&family=Bebas+Neue&family=Archivo+Black&family=Big+Shoulders+Display:wght@700;900&family=Permanent+Marker&family=DM+Mono:wght@400;500&display=swap');
 
@@ -241,14 +247,11 @@ body{background:var(--black);font-family:var(--f-mono);cursor:default;}
   .content{ padding:4vh 5vw; min-width:0; }
   .right-col{ width:100%; min-width:0; padding:0 5vw 4vh; }
   .top-row{ flex-direction:column; }
-  .hud-status{ text-align:left; align-items:flex-start; }
-  .hud-top{ justify-content:flex-start; }
   .rail-wrap{ height:170px; }
   .railCard{ width:110px; height:135px; }
   .widgets-row{ flex-direction:column; }
   .w-col{ max-width:100%; flex:none; }
   .w-col:first-child{ flex:none; max-width:100%; }
-  .areas-grid{ grid-template-columns:repeat(auto-fill,minmax(140px,1fr)); grid-auto-rows:170px; }
 }
 
 /* ===================== 31. SUBVISTAS — transición, título tipo sticker prop1 + fuente/color prop5 ===================== */
@@ -280,15 +283,128 @@ body{background:var(--black);font-family:var(--f-mono);cursor:default;}
 .goal-row span{ font-family:var(--f-mono); font-size:10.5px; color:#8a8580; }
 .goal-row .pct{ font-family:var(--f-display); font-size:22px; color:var(--accent); }
 
-.build-tag{ position:fixed; bottom:8px; left:8px; z-index:99; font-family:var(--f-mono); font-size:9px; color:#555; }
+/* ===================== 33. TAREAS & NOTAS (pestañas internas: notas / tareas / pomodoro) ===================== */
+#notasView::before{ content:""; position:absolute; top:-10%; right:-16%; width:60vw; height:120vh; pointer-events:none;
+  background-image:radial-gradient(var(--accent) 22%, transparent 23%); background-size:15px 15px; opacity:.13; transform:rotate(-8deg); z-index:0; }
+#notasView::after{ content:""; position:absolute; inset:0; pointer-events:none; z-index:0;
+  background:repeating-linear-gradient(135deg, transparent 0 40px, rgba(255,255,255,.02) 40px 42px); }
+#notasView > *{ position:relative; z-index:1; }
+
+.tn-tabs{ display:flex; gap:6px; padding:1vh 6vw 2.6vh; flex-wrap:wrap; }
+.tn-tab{ font-family:'Archivo Black',sans-serif; font-size:12px; letter-spacing:1px; text-transform:uppercase; color:var(--paper); background:rgba(245,242,236,.05); border:1px solid rgba(245,242,236,.18); padding:9px 18px; cursor:pointer; transition:.15s; }
+.tn-tab:hover{ border-color:var(--accent); color:var(--white); }
+.tn-tab.active{ background:var(--accent); color:var(--black); border-color:var(--accent); box-shadow:0 0 18px var(--accent-glow); }
+.tn-panel{ display:none; padding:0 6vw 8vh; max-width:760px; }
+.tn-panel.active{ display:block; }
+#tnTareas.active{ display:block; max-width:none; }
+
+.tn-form{ display:flex; flex-wrap:wrap; gap:9px; align-items:center; margin-bottom:20px; background:linear-gradient(165deg, rgba(229,30,45,.06), rgba(20,16,20,.9)); border:1px solid rgba(245,242,236,.14); padding:16px; max-width:1160px; }
+.tn-form input[type=text], .tn-form textarea, .tn-form select, .tn-form input[type=date]{
+  font-family:var(--f-mono); font-size:11.5px; color:var(--white); background:rgba(245,242,236,.06); border:1px solid rgba(245,242,236,.22); padding:9px 11px; outline:none; color-scheme:dark; }
+.tn-form input:focus, .tn-form select:focus, .tn-form textarea:focus{ border-color:var(--accent); }
+.tn-form textarea{ width:100%; min-height:56px; resize:vertical; }
+.tn-form select, .tn-form input[type=date]{ flex:1; min-width:130px; }
+/* legibilidad de las opciones del <select> nativo (fondo oscuro) */
+.tn-form select option{ background:#151014; color:var(--white); }
+.tn-form .tn-add{ font-family:'Archivo Black',sans-serif; font-size:11px; letter-spacing:1px; text-transform:uppercase; background:var(--accent); color:var(--black); border:none; padding:9px 18px; cursor:pointer; transition:.15s; }
+.tn-form .tn-add:hover{ background:var(--yellow); }
+
+.tn-colors{ display:flex; gap:7px; align-items:center; }
+.tn-dot{ width:18px; height:18px; border-radius:50%; cursor:pointer; border:2px solid transparent; transition:.15s; flex-shrink:0; }
+.tn-dot.sel{ border-color:var(--white); transform:scale(1.2); }
+
+.tn-empty{ font-family:var(--f-mono); font-size:11px; color:#665; padding:10px 2px; }
+.tn-note{ position:relative; background:#141014; border:1px solid rgba(245,242,236,.12); border-left:5px solid var(--accent); padding:10px 30px 10px 14px; margin-bottom:8px; max-width:760px; }
+.tn-note .tn-txt{ font-family:var(--f-mono); font-size:11.5px; color:var(--white); line-height:1.5; white-space:pre-wrap; }
+.tn-note .tn-meta{ display:flex; gap:9px; align-items:center; margin-top:6px; font-family:var(--f-mono); font-size:9px; color:#8a8580; }
+.tn-note .tn-area-tag{ border:1px dashed rgba(245,242,236,.3); padding:2px 7px; }
+.tn-del{ position:absolute; top:9px; right:11px; font-family:var(--f-mono); color:#8a8580; cursor:pointer; font-size:13px; transition:.15s; }
+.tn-del:hover{ color:var(--accent); }
+
+/* TABLERO DE TAREAS — 3 columnas por prioridad, usa el ancho disponible */
+.tn-board{ display:grid; grid-template-columns:repeat(3, 1fr); gap:16px; max-width:1160px; align-items:start; }
+.tn-col{ background:rgba(245,242,236,.03); border:1px solid rgba(245,242,236,.14); display:flex; flex-direction:column; min-height:140px; }
+.tn-col-head{ display:flex; justify-content:space-between; align-items:center; font-family:'Archivo Black',sans-serif; font-size:11px; letter-spacing:1px; text-transform:uppercase; padding:11px 14px; border-bottom:2px solid; }
+.tn-col-head.p-urgente{ color:var(--accent); border-color:var(--accent); background:rgba(229,30,45,.1); }
+.tn-col-head.p-media{ color:var(--yellow); border-color:var(--yellow); background:rgba(240,208,32,.1); }
+.tn-col-head.p-normal{ color:#2ecf6b; border-color:#2ecf6b; background:rgba(46,207,107,.1); }
+.tn-col-count{ font-family:var(--f-mono); font-size:10px; opacity:.85; }
+.tn-col-list{ padding:11px; display:flex; flex-direction:column; gap:8px; flex:1; }
+
+.tn-task{ display:flex; align-items:flex-start; gap:10px; background:#141014; border:1px solid rgba(245,242,236,.12); padding:9px 11px; transition:.15s; }
+.tn-task:hover{ border-color:rgba(245,242,236,.3); }
+.tn-task.done{ opacity:.4; }
+.tn-task.done .tn-task-txt{ text-decoration:line-through; }
+.tn-task-body{ flex:1; min-width:0; }
+.tn-task-txt{ font-family:var(--f-mono); font-size:11.5px; color:var(--white); line-height:1.4; }
+.tn-task-meta{ display:flex; gap:9px; margin-top:4px; font-family:var(--f-mono); font-size:9px; color:#8a8580; flex-wrap:wrap; }
+.tn-task-meta .tn-area-tag{ border:1px dashed rgba(245,242,236,.3); padding:1px 6px; }
+.tn-task-meta .venc.overdue{ color:#ff5a1f; }
+.tn-task-meta .venc.soon{ color:var(--yellow); }
+.tn-check{ width:19px; height:19px; margin-top:1px; border:2px solid rgba(245,242,236,.3); flex-shrink:0; cursor:pointer; display:flex; align-items:center; justify-content:center; font-size:12px; color:var(--black); transition:.15s; }
+.tn-task.done .tn-check{ background:var(--accent); border-color:var(--accent); }
+.tn-task-del{ font-family:var(--f-mono); color:#8a8580; cursor:pointer; font-size:14px; flex-shrink:0; transition:.15s; }
+.tn-task-del:hover{ color:var(--accent); }
+
+@media(max-width:900px){ .tn-board{ grid-template-columns:1fr; } }
+
+/* ===================== POMODORO — grande, con glow y pulso ===================== */
+.pomo-wrap{ display:flex; flex-direction:column; align-items:center; gap:24px; padding-top:2vh; }
+.pomo-presets{ display:flex; gap:8px; }
+.pomo-presets button{ font-family:var(--f-mono); font-size:10px; color:var(--paper); background:rgba(245,242,236,.05); border:1px solid rgba(245,242,236,.18); padding:6px 14px; cursor:pointer; }
+.pomo-presets button.active{ border-color:var(--yellow); color:var(--yellow); box-shadow:0 0 10px rgba(240,208,32,.4); }
+.pomo-ring{ position:relative; width:300px; height:300px; max-width:80vw; max-height:80vw; }
+.pomo-glow{ position:absolute; inset:-30px; border-radius:50%; background:radial-gradient(circle, var(--accent-glow) 0%, transparent 70%); opacity:.35; filter:blur(6px); pointer-events:none; transition:opacity .3s; }
+.pomo-ring.running .pomo-glow{ animation:pomoGlowPulse 2s ease-in-out infinite; }
+.pomo-ring.brkmode .pomo-glow{ background:radial-gradient(circle, rgba(240,208,32,.5) 0%, transparent 70%); }
+@keyframes pomoGlowPulse{ 0%,100%{ opacity:.3; } 50%{ opacity:.65; } }
+.pomo-ring svg{ transform:rotate(-90deg); position:relative; z-index:1; }
+.pomo-ring circle{ fill:none; stroke-width:13; }
+.pomo-ring .bg{ stroke:rgba(245,242,236,.08); }
+.pomo-ring .fg{ stroke:var(--accent); stroke-linecap:round; transition:stroke-dashoffset .3s linear, stroke .3s; filter:drop-shadow(0 0 8px var(--accent-glow)); }
+.pomo-ring .fg.brk{ stroke:var(--yellow); filter:drop-shadow(0 0 8px rgba(240,208,32,.55)); }
+.pomo-center{ position:absolute; inset:0; z-index:2; display:flex; flex-direction:column; align-items:center; justify-content:center; }
+.pomo-mode{ font-family:'Archivo Black',sans-serif; font-size:13px; letter-spacing:.25em; color:var(--accent); text-transform:uppercase; }
+.pomo-ring.brkmode .pomo-mode{ color:var(--yellow); }
+.pomo-time{ font-family:var(--f-display); font-size:clamp(46px,7vw,64px); color:var(--white); line-height:1; margin-top:4px; -webkit-text-stroke:1.5px var(--black); filter:drop-shadow(2px 2px 0 rgba(0,0,0,.5)); }
+.pomo-tag{ font-family:var(--f-mono); font-size:9px; letter-spacing:.15em; color:#8a8580; text-transform:uppercase; margin-top:6px; }
+.pomo-btns{ display:flex; gap:12px; }
+.pomo-btns button{ font-family:'Archivo Black',sans-serif; font-size:12px; letter-spacing:1.5px; text-transform:uppercase; background:var(--accent); color:var(--black); border:none; padding:12px 26px; cursor:pointer; transition:.15s; box-shadow:0 0 14px var(--accent-glow); }
+.pomo-btns button.secondary{ background:transparent; color:var(--paper); border:1px solid rgba(245,242,236,.28); box-shadow:none; }
+.pomo-btns button:hover{ background:var(--yellow); box-shadow:0 0 18px rgba(240,208,32,.5); }
+.pomo-btns button.secondary:hover{ border-color:var(--accent); color:var(--white); background:transparent; }
+.pomo-count{ font-family:var(--f-mono); font-size:11px; color:#8a8580; }
+.pomo-count b{ color:var(--accent); font-size:13px; }
+
 .toast{ position:fixed; bottom:20px; left:50%; transform:translateX(-50%) translateY(20px); background:var(--black); border:1px solid var(--accent); color:var(--white); font-family:var(--f-mono); font-size:11px; padding:9px 18px; z-index:500; opacity:0; transition:.25s; pointer-events:none; }
 .toast.show{ opacity:1; transform:translateX(-50%) translateY(0); }
+/* ===================== 34. AJUSTES SOLO CELULAR (van al final para ganar la cascada; no tocan desktop) ===================== */
+@media(max-width:900px){
+  /* 1) "MI SISTEMA — MI VIDA" más legible: más contraste + un leve contorno de color */
+  .eyebrow{ font-size:12.5px; letter-spacing:.24em; color:var(--white); font-weight:700;
+    -webkit-text-stroke:.6px var(--accent); text-shadow:0 0 10px rgba(229,30,45,.55); }
+
+  /* 3) HUD (hora/fecha/clima/racha/sync) a la misma altura que el título, a la derecha */
+  .mobile-top-wrap{ display:flex; justify-content:space-between; align-items:flex-start; gap:10px; }
+  .mobile-title-group{ flex:1 1 auto; min-width:0; }
+  .mobile-title-group .title{ font-size:clamp(34px,11.5vw,52px); margin-top:2px; }
+  .mobile-top-wrap .hud-status{ flex:0 0 auto; width:auto; max-width:46%; min-width:0; text-align:right; align-items:flex-end; font-size:10px; gap:4px; }
+  .mobile-top-wrap .hud-status .style-lbl{ display:none; }
+  .mobile-top-wrap .hud-status .hud-clock{ font-size:15px; }
+  .mobile-top-wrap .hud-status .style-btn{ padding:0; border:none; background:none; }
+
+  /* 5) tarjetas de "Ver áreas" — de 3 en 3, más espaciadas y legibles */
+  .areas-grid{ grid-template-columns:repeat(3, 1fr); grid-auto-rows:148px; gap:9px; padding:1vh 4vw 6vh; }
+  .area-card{ padding:9px; }
+  .area-card .nm{ font-size:12px; line-height:1.15; }
+  .area-card .st{ font-size:8px; }
+  .area-card .mod{ font-size:8px; }
+  .area-card .img-btn{ display:none; }
+}
 
 /* ===== LOGIN GATE ===== */
 #loginGate{ position:fixed; inset:0; z-index:1000; background:var(--black); display:flex; align-items:center; justify-content:center; }
-#loginGate .halftone{ display:block; }
 .login-box{ position:relative; z-index:2; width:min(340px, 86vw); padding:34px 30px; background:#141014; border:1px solid rgba(245,242,236,.14); }
-.login-box .eyebrow{ opacity:1; animation:none; }
 .login-box h1{ font-family:var(--f-display); font-size:30px; color:var(--white); margin:6px 0 20px; letter-spacing:.02em; }
 .login-box input{ width:100%; background:var(--black); border:1px solid rgba(245,242,236,.18); color:var(--white); font-family:var(--f-mono); font-size:13px; padding:12px 14px; margin-bottom:12px; outline:none; }
 .login-box input:focus{ border-color:var(--accent); }
@@ -300,9 +416,7 @@ body{background:var(--black);font-family:var(--f-mono);cursor:default;}
 </head>
 <body>
 <div id="loginGate">
-  <div class="halftone"></div>
   <div class="login-box">
-    <div class="eyebrow">MI SISTEMA — MI VIDA</div>
     <h1>ENTRAR</h1>
     <input type="email" id="loginEmail" placeholder="correo" autocomplete="username">
     <input type="password" id="loginPass" placeholder="contraseña" autocomplete="current-password">
@@ -339,7 +453,7 @@ body{background:var(--black);font-family:var(--f-mono);cursor:default;}
       <div class="item" onclick="openView('objetivosView')"><span class="num-stamp">01</span><div class="stickwrap"><span class="label sticker" data-txt="Objetivos"></span><span class="sub">0% del mes</span></div></div>
       <div class="item" onclick="openView('calView')"><span class="num-stamp">02</span><div class="stickwrap"><span class="label sticker" data-txt="Calendario"></span><span class="sub">fechas límite y metas</span></div></div>
       <div class="item" onclick="openView('areasView')"><span class="num-stamp">03</span><div class="stickwrap"><span class="label sticker" data-txt="Ver áreas ↳"></span><span class="sub">14 en total</span></div></div>
-      <div class="item" onclick="openView('notasView')"><span class="num-stamp">04</span><div class="stickwrap"><span class="label sticker" data-txt="Notas rápidas"></span><span class="sub">apuntar antes de olvidar</span></div></div>
+      <div class="item" onclick="openView('notasView')"><span class="num-stamp">04</span><div class="stickwrap"><span class="label sticker" data-txt="Tareas &amp; Notas"></span><span class="sub">notas, tareas y pomodoro</span></div></div>
       <div class="item" onclick="openView('mejorasView')"><span class="num-stamp">05</span><div class="stickwrap"><span class="label sticker" data-txt="Mejoras"></span><span class="sub">ideas y pendientes</span></div></div>
     </nav>
   </div>
@@ -425,7 +539,6 @@ body{background:var(--black);font-family:var(--f-mono);cursor:default;}
 </div>
 <div class="flash" id="flash"></div>
 <div class="toast" id="toast"></div>
-<div class="build-tag">MASTER V2 — COMPLETO (puntos 1–32)</div>
 
 <!-- SUBVISTAS -->
 <div class="subview" id="objetivosView">
@@ -450,8 +563,87 @@ body{background:var(--black);font-family:var(--f-mono);cursor:default;}
   <div class="subview-desc"><span class="tag">EN CONSTRUCCIÓN</span><br>Acá vas a ir guardando ideas, pendientes y cosas que se te ocurran sobre el proyecto mismo.</div>
 </div>
 <div class="subview" id="notasView">
-  <div class="subview-head"><div class="subview-back" onclick="closeView('notasView')">← VOLVER AL HOME</div><div class="subview-title" data-txt="NOTAS"></div><div></div></div>
-  <div class="subview-desc"><span class="tag">EN CONSTRUCCIÓN</span><br>Apuntes rápidos tipo "idea antes de que se me olvide". Se gestionan después en el área Segundo Cerebro.</div>
+  <div class="subview-head"><div class="subview-back" onclick="closeView('notasView')">← VOLVER AL HOME</div><div class="subview-title" data-txt="TAREAS &amp; NOTAS"></div><div></div></div>
+
+  <div class="tn-tabs">
+    <div class="tn-tab active" data-tab="tnNotas" onclick="tnSwitch('tnNotas')">📝 Notas rápidas</div>
+    <div class="tn-tab" data-tab="tnTareas" onclick="tnSwitch('tnTareas')">✅ Tareas</div>
+    <div class="tn-tab" data-tab="tnPomo" onclick="tnSwitch('tnPomo')">⏱️ Pomodoro</div>
+  </div>
+
+  <!-- NOTAS RÁPIDAS -->
+  <div class="tn-panel active" id="tnNotas">
+    <div class="tn-form">
+      <textarea id="notaTxt" placeholder="Escribe tu idea antes de que se te olvide..."></textarea>
+      <div class="tn-colors" id="notaColors">
+        <div class="tn-dot sel" style="background:#e51e2d" data-c="#e51e2d" title="Rojo"></div>
+        <div class="tn-dot" style="background:#f0d020" data-c="#f0d020" title="Amarillo"></div>
+        <div class="tn-dot" style="background:#2ecf6b" data-c="#2ecf6b" title="Verde"></div>
+        <div class="tn-dot" style="background:#2196f3" data-c="#2196f3" title="Azul"></div>
+        <div class="tn-dot" style="background:#9b30ff" data-c="#9b30ff" title="Violeta"></div>
+      </div>
+      <select id="notaArea"></select>
+      <button class="tn-add" onclick="addNota()">+ Guardar nota</button>
+    </div>
+    <div id="notaList"></div>
+  </div>
+
+  <!-- TAREAS -->
+  <div class="tn-panel" id="tnTareas">
+    <div class="tn-form">
+      <input type="text" id="tareaTxt" placeholder="¿Qué tienes que hacer?" style="flex:1 1 100%;">
+      <select id="tareaPrio">
+        <option value="urgente">🔴 Urgente</option>
+        <option value="media">🟡 No muy urgente</option>
+        <option value="normal" selected>🟢 Normal</option>
+      </select>
+      <select id="tareaArea"></select>
+      <input type="date" id="tareaFecha" title="Fecha máxima (opcional)">
+      <button class="tn-add" onclick="addTarea()">+ Añadir tarea</button>
+    </div>
+    <div class="tn-board">
+      <div class="tn-col">
+        <div class="tn-col-head p-urgente"><span>🔴 Urgentes</span><span class="tn-col-count" id="countUrgente">0</span></div>
+        <div class="tn-col-list" id="listUrgente"></div>
+      </div>
+      <div class="tn-col">
+        <div class="tn-col-head p-media"><span>🟡 No tan urgentes</span><span class="tn-col-count" id="countMedia">0</span></div>
+        <div class="tn-col-list" id="listMedia"></div>
+      </div>
+      <div class="tn-col">
+        <div class="tn-col-head p-normal"><span>🟢 Normales</span><span class="tn-col-count" id="countNormal">0</span></div>
+        <div class="tn-col-list" id="listNormal"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- POMODORO -->
+  <div class="tn-panel" id="tnPomo">
+    <div class="pomo-wrap">
+      <div class="pomo-presets">
+        <button class="active" onclick="pomoPreset(25,5,this)">25 / 5</button>
+        <button onclick="pomoPreset(50,10,this)">50 / 10</button>
+        <button onclick="pomoPreset(15,3,this)">15 / 3</button>
+      </div>
+      <div class="pomo-ring" id="pomoRing">
+        <div class="pomo-glow"></div>
+        <svg width="300" height="300" viewBox="0 0 300 300">
+          <circle class="bg" cx="150" cy="150" r="132"></circle>
+          <circle class="fg" id="pomoArc" cx="150" cy="150" r="132" stroke-dasharray="829.4" stroke-dashoffset="0"></circle>
+        </svg>
+        <div class="pomo-center">
+          <div class="pomo-mode" id="pomoMode">ENFOQUE</div>
+          <div class="pomo-time" id="pomoTime">25:00</div>
+          <div class="pomo-tag" id="pomoTag">MODO CONCENTRACIÓN</div>
+        </div>
+      </div>
+      <div class="pomo-btns">
+        <button id="pomoStartBtn" onclick="pomoToggle()">▶ Iniciar</button>
+        <button class="secondary" onclick="pomoReset()">↺ Reiniciar</button>
+      </div>
+      <div class="pomo-count">Sesiones de enfoque completadas hoy: <b id="pomoCount">0</b></div>
+    </div>
+  </div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -465,9 +657,64 @@ function todayISO(){
   const d = new Date();
   return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
 }
-
-/* Metas de peso fijas por mes, ya confirmadas en el plan (jul→dic 2026) */
 const MONTH_GOALS = {7:96, 8:92.5, 9:88.5, 10:85.5, 11:82.5, 12:80};
+
+/* ===== REORDEN SOLO CELULAR (≤900px) =====
+   En desktop no se toca nada. En celular:
+   - HUD (hora/fecha/clima/racha/sync) queda a la derecha, a la misma altura que "MI SISTEMA — MI VIDA / HAZLO REAL"
+   - peso-chip pasa a ir entre #ctxBanner y #weekProg
+   - rail-wrap pasa a ir entre #weekProg y #menu (nav) */
+(function(){
+  const mq = window.matchMedia('(max-width:900px)');
+  const contentEl = document.querySelector('.content');
+  const topRow = document.querySelector('.top-row');
+  const rightCol = document.querySelector('.right-col');
+  const widgetsRow = document.querySelector('.widgets-row');
+  const pesoChip = document.querySelector('.peso-chip');
+  const hudStatus = document.querySelector('.hud-status');
+  const railWrap = document.querySelector('.rail-wrap');
+  const weekProg = document.getElementById('weekProg');
+  const menuEl = document.getElementById('menu');
+  const eyebrowEl = document.querySelector('.eyebrow');
+  const eyebrowSubEl = document.querySelector('.eyebrow-sub');
+  const titleEl = document.querySelector('.title');
+
+  function applyLayout(e){
+    if(e.matches){
+      let topWrap = document.getElementById('mobileTopWrap');
+      let titleGroup = document.getElementById('mobileTitleGroup');
+      if(!topWrap){
+        topWrap = document.createElement('div');
+        topWrap.id = 'mobileTopWrap';
+        topWrap.className = 'mobile-top-wrap';
+        titleGroup = document.createElement('div');
+        titleGroup.id = 'mobileTitleGroup';
+        titleGroup.className = 'mobile-title-group';
+        topWrap.appendChild(titleGroup);
+        topWrap.appendChild(hudStatus);
+        contentEl.insertBefore(topWrap, contentEl.firstElementChild);
+      }
+      titleGroup.appendChild(eyebrowEl);
+      titleGroup.appendChild(eyebrowSubEl);
+      titleGroup.appendChild(titleEl);
+      contentEl.insertBefore(pesoChip, weekProg);
+      contentEl.insertBefore(railWrap, menuEl);
+    } else {
+      const topWrap = document.getElementById('mobileTopWrap');
+      if(topWrap){
+        contentEl.insertBefore(eyebrowEl, topWrap);
+        contentEl.insertBefore(eyebrowSubEl, topWrap);
+        contentEl.insertBefore(titleEl, topWrap);
+        topWrap.remove();
+      }
+      topRow.insertBefore(pesoChip, topRow.firstElementChild);
+      topRow.appendChild(hudStatus);
+      rightCol.insertBefore(railWrap, widgetsRow);
+    }
+  }
+  mq.addEventListener('change', applyLayout);
+  applyLayout(mq);
+})();
 
 /* ===== SONIDO base (prop1) ===== */
 let actx;
@@ -633,8 +880,7 @@ const ICONS = {
   arte:'<path d="M4 20l6-6M14 4l6 6-10 10H4v-6z"/>',
   ocio:'<rect x="3" y="8" width="18" height="9" rx="3"/><circle cx="8" cy="12" r="1"/><circle cx="16" cy="12" r="1"/>',
   objetivos:'<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4"/>',
-  productividad:'<path d="M4 6h16M4 12h16M4 18h10"/>',
-  bienestar:'<path d="M12 21s-8-4.5-8-11a5 5 0 019-3 5 5 0 019 3c0 6.5-8 11-8 11z"/>',
+  sueno:'<path d="M20 14.2A8.2 8.2 0 1110 3.8a6.5 6.5 0 0010 10.4z"/>',
   relaciones:'<path d="M8 12h8M8 12a4 4 0 010-8M16 12a4 4 0 000-8"/>',
   emprendimiento:'<path d="M3 17l6-6 4 4 8-8"/><path d="M15 7h6v6"/>',
   redes:'<circle cx="6" cy="12" r="2.5"/><circle cx="18" cy="6" r="2.5"/><circle cx="18" cy="18" r="2.5"/><path d="M8.2 10.8L15.8 7.2M8.2 13.2L15.8 16.8"/>',
@@ -642,19 +888,18 @@ const ICONS = {
 };
 const AREAS = [
   {mod:'01',nm:'Cuerpo & Salud',st:'97.2kg · 0/9 hábitos',ic:'cuerpo',id:'cuerpo'},
-  {mod:'02',nm:'Nutrición',st:'plan semanal ok',ic:'nutricion',id:'nutricion'},
-  {mod:'03',nm:'Finanzas',st:'presupuesto ok',ic:'finanzas',id:'finanzas'},
-  {mod:'04',nm:'Trabajo',st:'2 postulaciones',ic:'trabajo',id:'trabajo'},
-  {mod:'05',nm:'2º Cerebro',st:'5 notas nuevas',ic:'cerebro',id:'cerebro'},
-  {mod:'06',nm:'Arte',st:'escultura 40%',ic:'arte',id:'arte'},
-  {mod:'07',nm:'Ocio',st:'2 pendientes',ic:'ocio',id:'ocio'},
-  {mod:'08',nm:'Objetivos',st:'4/7 semanales',ic:'objetivos',id:'objetivos'},
-  {mod:'09',nm:'Productividad',st:'al día',ic:'productividad',id:'productividad'},
-  {mod:'10',nm:'Bienestar',st:'chequeo pendiente',ic:'bienestar',id:'bienestar'},
-  {mod:'11',nm:'Relaciones',st:'1 cumpleaños',ic:'relaciones',id:'relaciones'},
-  {mod:'12',nm:'Emprendimiento',st:'idea en curso',ic:'emprendimiento',id:'emprendimiento'},
-  {mod:'13',nm:'Redes Sociales',st:'sin revisar',ic:'redes',id:'redes'},
-  {mod:'14',nm:'Func. Técnica',st:'diseño 55%',ic:'tecnico',id:'tecnico'}
+  {mod:'02',nm:'Sueño & Descanso',st:'seguimiento pendiente',ic:'sueno',id:'sueno'},
+  {mod:'03',nm:'Nutrición',st:'plan semanal ok',ic:'nutricion',id:'nutricion'},
+  {mod:'04',nm:'Finanzas',st:'presupuesto ok',ic:'finanzas',id:'finanzas'},
+  {mod:'05',nm:'Trabajo',st:'2 postulaciones',ic:'trabajo',id:'trabajo'},
+  {mod:'06',nm:'2º Cerebro',st:'5 notas nuevas',ic:'cerebro',id:'cerebro'},
+  {mod:'07',nm:'Arte',st:'escultura 40%',ic:'arte',id:'arte'},
+  {mod:'08',nm:'Ocio',st:'2 pendientes',ic:'ocio',id:'ocio'},
+  {mod:'09',nm:'Objetivos',st:'4/7 semanales',ic:'objetivos',id:'objetivos'},
+  {mod:'10',nm:'Relaciones',st:'1 cumpleaños',ic:'relaciones',id:'relaciones'},
+  {mod:'11',nm:'Emprendimiento',st:'idea en curso',ic:'emprendimiento',id:'emprendimiento'},
+  {mod:'12',nm:'Redes Sociales',st:'sin revisar',ic:'redes',id:'redes'},
+  {mod:'13',nm:'Func. Técnica',st:'diseño 55%',ic:'tecnico',id:'tecnico'}
 ];
 const railTrack = document.getElementById('railTrack');
 function buildRail(){
@@ -692,12 +937,37 @@ AREAS.forEach((a,i)=>{
   areasGrid.appendChild(d);
 });
 
-/* ===== 20-24 HÁBITOS + PANAL + RANGO (datos reales desde Supabase) ===== */
+/* ===== 20-24 HÁBITOS + PANAL + RANGO ===== */
 document.querySelectorAll('.hex').forEach(hx=>{
   const em = hx.getAttribute('data-emoji');
   if(em) hx.textContent = em;
 });
 
+const RANKS = ['F','E','D','C','B','A','S'];
+let currentRankIdx = 0;
+function rankFromPct(pct){ if(pct>=90) return 6; if(pct>=75) return 5; if(pct>=60) return 4; if(pct>=45) return 3; if(pct>=30) return 2; if(pct>=15) return 1; return 0; }
+const RANK_MSG = {
+  0:['Recién arrancando.','Sigue así.'], 1:['Vas tomando forma.','Un hábito a la vez.'],
+  2:['Buen ritmo.','No lo sueltes.'], 3:['Los hábitos ya se sienten naturales.','Falta poco.'],
+  4:['Casi redondo el día.','Un empujón más.'], 5:['Un hábito para el rango perfecto.','Tan cerca.'],
+  6:['¡RANGO S ALCANZADO!','COMPLETASTE TODOS TUS HÁBITOS DE HOY']
+};
+function updateHiveAndRank(){
+  const total = document.querySelectorAll('.hex').length;
+  const done = document.querySelectorAll('.hex.done').length;
+  document.getElementById('hiveCount').textContent = done;
+  const pct = Math.round((done/total)*100);
+  const newIdx = rankFromPct(pct);
+  const badge = document.getElementById('rkBadge');
+  document.getElementById('rkLetter').textContent = RANKS[newIdx];
+  badge.className = 'rk-stamp rk-'+RANKS[newIdx];
+  if(newIdx > currentRankIdx){
+    badge.classList.add('flash');
+    setTimeout(()=>badge.classList.remove('flash'), 850);
+    triggerCelebration(newIdx);
+  }
+  currentRankIdx = newIdx;
+}
 document.querySelectorAll('.hex').forEach(hx=>{
   hx.addEventListener('click', async ()=>{
     const id = hx.getAttribute('data-id');
@@ -727,9 +997,9 @@ async function loadPesoChip(){
   document.getElementById('pesoActual').textContent = last.weight.toFixed(1)+'kg';
   if(goal!=null){
     const falta = Math.max(0, +(last.weight - goal).toFixed(1));
-    document.getElementById('pesoFalta').textContent = falta>0 ? `faltan ${falta}kg` : '¡meta del mes cumplida!';
+    document.getElementById('pesoFalta').textContent = falta>0 ? `faltan ${falta}kg` : '¡meta cumplida!';
     document.querySelector('.month-cap span').textContent = `Meta mensual: ${goal}kg`;
-    const startWeight = 97.2; // peso de arranque del plan
+    const startWeight = 97.2;
     const pctAvance = Math.min(100, Math.max(0, Math.round(((startWeight-last.weight)/(startWeight-goal))*100)));
     document.getElementById('monthFill').style.width = pctAvance+'%';
   }
@@ -750,35 +1020,14 @@ async function loadStreak(){
   document.getElementById('streakNum').textContent = streak;
 }
 
-const RANKS = ['F','E','D','C','B','A','S'];
-let currentRankIdx = 0;
-function rankFromPct(pct){ if(pct>=90) return 6; if(pct>=75) return 5; if(pct>=60) return 4; if(pct>=45) return 3; if(pct>=30) return 2; if(pct>=15) return 1; return 0; }
-const RANK_MSG = {
-  0:['Recién arrancando.','Sigue así.'], 1:['Vas tomando forma.','Un hábito a la vez.'],
-  2:['Buen ritmo.','No lo sueltes.'], 3:['Los hábitos ya se sienten naturales.','Falta poco.'],
-  4:['Casi redondo el día.','Un empujón más.'], 5:['Un hábito para el rango perfecto.','Tan cerca.'],
-  6:['¡RANGO S ALCANZADO!','COMPLETASTE TODOS TUS HÁBITOS DE HOY']
-};
-function updateHiveAndRank(){
-  const total = document.querySelectorAll('.hex').length;
-  const done = document.querySelectorAll('.hex.done').length;
-  document.getElementById('hiveCount').textContent = done;
-  const pct = Math.round((done/total)*100);
-  const newIdx = rankFromPct(pct);
-  const badge = document.getElementById('rkBadge');
-  document.getElementById('rkLetter').textContent = RANKS[newIdx];
-  badge.className = 'rk-stamp rk-'+RANKS[newIdx];
-  if(newIdx > currentRankIdx){
-    badge.classList.add('flash');
-    setTimeout(()=>badge.classList.remove('flash'), 850);
-    triggerCelebration(newIdx);
-  }
-  currentRankIdx = newIdx;
-}
 function startApp(){
   loadHabitsHoy();
   loadPesoChip();
   loadStreak();
+  sb.channel('home-sync')
+    .on('postgres_changes', {event:'*', schema:'public', table:'habits_daily_log'}, ()=>{ loadHabitsHoy(); loadStreak(); })
+    .on('postgres_changes', {event:'*', schema:'public', table:'weight_log'}, ()=>{ loadPesoChip(); })
+    .subscribe();
 }
 function triggerCelebration(rankIdx){
   const isS = rankIdx===6;
@@ -806,6 +1055,180 @@ function closeView(id){
   blip(400,.06,'square',.04);
 }
 
+/* ===================== 33. TAREAS & NOTAS ===================== */
+function escHtml(s){ const d=document.createElement('div'); d.textContent=s; return d.innerHTML; }
+const AREA_NAMES = ['General', ...AREAS.map(a=>a.nm)];
+function fillAreaSelect(sel){ sel.innerHTML = AREA_NAMES.map(n=>`<option value="${n}">${n}</option>`).join(''); }
+fillAreaSelect(document.getElementById('notaArea'));
+fillAreaSelect(document.getElementById('tareaArea'));
+
+/* pestañas internas */
+function tnSwitch(id){
+  document.querySelectorAll('.tn-tab').forEach(t=>t.classList.toggle('active', t.dataset.tab===id));
+  document.querySelectorAll('.tn-panel').forEach(p=>p.classList.toggle('active', p.id===id));
+  blip(650,.05,'square',.03);
+}
+
+/* ---- NOTAS RÁPIDAS ---- */
+let notaColorSel = '#e51e2d';
+document.querySelectorAll('#notaColors .tn-dot').forEach(dot=>{
+  dot.addEventListener('click', ()=>{
+    document.querySelectorAll('#notaColors .tn-dot').forEach(d=>d.classList.remove('sel'));
+    dot.classList.add('sel'); notaColorSel = dot.dataset.c; blip(750,.04,'square',.03);
+  });
+});
+let notas = [];
+try{ notas = JSON.parse(localStorage.getItem('tn_notas')||'[]'); }catch(e){ notas=[]; }
+function saveNotas(){ try{ localStorage.setItem('tn_notas', JSON.stringify(notas)); }catch(e){} }
+function renderNotas(){
+  const list = document.getElementById('notaList');
+  if(!notas.length){ list.innerHTML = '<div class="tn-empty">Sin notas todavía — anota lo primero que se te ocurra.</div>'; return; }
+  list.innerHTML = notas.slice().reverse().map(n=>`
+    <div class="tn-note" style="border-left-color:${n.color}">
+      <span class="tn-del" onclick="delNota(${n.id})">✕</span>
+      <div class="tn-txt">${escHtml(n.txt)}</div>
+      <div class="tn-meta"><span class="tn-area-tag">${escHtml(n.area)}</span><span>${n.fecha}</span></div>
+    </div>`).join('');
+}
+function addNota(){
+  const ta = document.getElementById('notaTxt');
+  const txt = ta.value.trim();
+  if(!txt) return;
+  const area = document.getElementById('notaArea').value;
+  const now = new Date();
+  notas.push({ id:Date.now(), txt, color:notaColorSel, area, fecha: now.getDate()+' '+mesesV[now.getMonth()]+' · '+String(now.getHours()).padStart(2,'0')+':'+String(now.getMinutes()).padStart(2,'0') });
+  saveNotas(); renderNotas(); ta.value=''; blip(500,.07,'square',.04); setTimeout(()=>blip(760,.08,'square',.04),60);
+}
+function delNota(id){ notas = notas.filter(n=>n.id!==id); saveNotas(); renderNotas(); blip(300,.05,'square',.03); }
+renderNotas();
+
+/* ---- TAREAS (tablero en 3 columnas por prioridad) ---- */
+const PRIO_LABEL = { urgente:'Urgente', media:'No muy urgente', normal:'Normal' };
+let tareas = [];
+try{ tareas = JSON.parse(localStorage.getItem('tn_tareas')||'[]'); }catch(e){ tareas=[]; }
+function saveTareas(){ try{ localStorage.setItem('tn_tareas', JSON.stringify(tareas)); }catch(e){} }
+function diasRestantes(fechaStr){
+  if(!fechaStr) return null;
+  const hoy = new Date(); hoy.setHours(0,0,0,0);
+  const f = new Date(fechaStr+'T00:00:00');
+  return Math.round((f-hoy)/86400000);
+}
+function taskCardHtml(t){
+  const dias = diasRestantes(t.fecha);
+  let vencTxt = '';
+  if(dias!==null){
+    let cls = ''; if(dias<0) cls='overdue'; else if(dias<=2) cls='soon';
+    vencTxt = `<span class="venc ${cls}">${dias<0? 'vencida hace '+Math.abs(dias)+'d' : dias===0? 'vence hoy' : 'vence en '+dias+'d'}</span>`;
+  }
+  return `<div class="tn-task ${t.done?'done':''}">
+    <div class="tn-check" onclick="toggleTarea(${t.id})">${t.done?'✓':''}</div>
+    <div class="tn-task-body">
+      <div class="tn-task-txt">${escHtml(t.txt)}</div>
+      <div class="tn-task-meta"><span class="tn-area-tag">${escHtml(t.area)}</span>${vencTxt}</div>
+    </div>
+    <span class="tn-task-del" onclick="delTarea(${t.id})">✕</span>
+  </div>`;
+}
+function renderCol(prio, listId, countId){
+  const arr = tareas.filter(t=>t.prio===prio).sort((a,b)=> (a.fecha||'9999').localeCompare(b.fecha||'9999'));
+  document.getElementById(countId).textContent = arr.length;
+  const list = document.getElementById(listId);
+  list.innerHTML = arr.length ? arr.map(taskCardHtml).join('') : '<div class="tn-empty">Sin tareas.</div>';
+}
+function renderTareas(){
+  renderCol('urgente','listUrgente','countUrgente');
+  renderCol('media','listMedia','countMedia');
+  renderCol('normal','listNormal','countNormal');
+}
+function addTarea(){
+  const inp = document.getElementById('tareaTxt');
+  const txt = inp.value.trim();
+  if(!txt) return;
+  const prio = document.getElementById('tareaPrio').value;
+  const area = document.getElementById('tareaArea').value;
+  const fecha = document.getElementById('tareaFecha').value;
+  tareas.push({ id:Date.now(), txt, prio, area, fecha, done:false });
+  saveTareas(); renderTareas(); inp.value=''; document.getElementById('tareaFecha').value='';
+  blip(500,.07,'square',.04); setTimeout(()=>blip(760,.08,'square',.04),60);
+}
+function toggleTarea(id){
+  const t = tareas.find(x=>x.id===id); if(!t) return;
+  t.done = !t.done; saveTareas(); renderTareas();
+  if(t.done){ blip(500,.1,'square',.05); setTimeout(()=>blip(760,.12,'square',.05),70); } else { blip(300,.06,'square',.03); }
+}
+function delTarea(id){ tareas = tareas.filter(t=>t.id!==id); saveTareas(); renderTareas(); blip(300,.05,'square',.03); }
+renderTareas();
+
+/* ---- POMODORO ---- */
+const POMO_CIRC = 2*Math.PI*98;
+let pomoWorkMin = 25, pomoBreakMin = 5;
+let pomoRemaining = pomoWorkMin*60;
+let pomoMode = 'focus'; // focus | break
+let pomoRunning = false;
+let pomoInterval = null;
+let pomoSessions = 0;
+try{ pomoSessions = parseInt(localStorage.getItem('tn_pomoCount')||'0',10)||0; }catch(e){}
+document.getElementById('pomoCount').textContent = pomoSessions;
+function pomoPreset(work, brk, btn){
+  pomoWorkMin = work; pomoBreakMin = brk;
+  document.querySelectorAll('.pomo-presets button').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  pomoReset(); blip(650,.05,'square',.03);
+}
+function pomoUpdateDisplay(){
+  const m = Math.floor(pomoRemaining/60), s = pomoRemaining%60;
+  document.getElementById('pomoTime').textContent = String(m).padStart(2,'0')+':'+String(s).padStart(2,'0');
+  document.getElementById('pomoMode').textContent = pomoMode==='focus' ? 'ENFOQUE' : 'DESCANSO';
+  document.getElementById('pomoTag').textContent = pomoMode==='focus' ? 'MODO CONCENTRACIÓN' : 'RECARGANDO ENERGÍA';
+  const total = (pomoMode==='focus'? pomoWorkMin : pomoBreakMin)*60;
+  const arc = document.getElementById('pomoArc');
+  arc.style.strokeDashoffset = POMO_CIRC*(1 - pomoRemaining/total);
+  arc.classList.toggle('brk', pomoMode==='break');
+  document.getElementById('pomoRing').classList.toggle('brkmode', pomoMode==='break');
+}
+/* alarma enérgica: enfoque terminado, toca descansar */
+function playAlarmEnergetic(){
+  blip(880,.12,'square',.07); setTimeout(()=>blip(1046,.12,'square',.07),130);
+  setTimeout(()=>blip(1318,.18,'square',.08),260); setTimeout(()=>blip(1046,.12,'square',.06),430);
+  setTimeout(()=>blip(1318,.24,'sine',.07),560);
+}
+/* melodía suave y relajante: descanso terminado, de vuelta al enfoque */
+function playMelodyRelax(){
+  const notas=[659.25,587.33,523.25,440];
+  notas.forEach((f,i)=> setTimeout(()=>blip(f,.4,'sine',.02), i*280));
+}
+function pomoToggle(){
+  const btn = document.getElementById('pomoStartBtn');
+  if(pomoRunning){
+    pomoRunning=false; clearInterval(pomoInterval); document.getElementById('pomoRing').classList.remove('running');
+    btn.textContent='▶ Reanudar'; blip(300,.06,'square',.04); return;
+  }
+  pomoRunning=true; document.getElementById('pomoRing').classList.add('running'); btn.textContent='⏸ Pausar'; blip(600,.06,'square',.04);
+  pomoInterval = setInterval(()=>{
+    pomoRemaining--;
+    if(pomoRemaining<=0){
+      if(pomoMode==='focus'){
+        pomoSessions++; try{ localStorage.setItem('tn_pomoCount', pomoSessions); }catch(e){}
+        document.getElementById('pomoCount').textContent = pomoSessions;
+        pomoMode='break'; pomoRemaining=pomoBreakMin*60;
+        playAlarmEnergetic(); showToast('🔥 Enfoque terminado — a descansar');
+      } else {
+        pomoMode='focus'; pomoRemaining=pomoWorkMin*60;
+        playMelodyRelax(); showToast('✨ Descanso terminado — a enfocarse');
+      }
+    }
+    pomoUpdateDisplay();
+  },1000);
+  pomoUpdateDisplay();
+}
+function pomoReset(){
+  pomoRunning=false; clearInterval(pomoInterval); document.getElementById('pomoRing').classList.remove('running');
+  pomoMode='focus'; pomoRemaining=pomoWorkMin*60;
+  document.getElementById('pomoStartBtn').textContent='▶ Iniciar';
+  pomoUpdateDisplay(); blip(400,.05,'square',.03);
+}
+pomoUpdateDisplay();
+
 /* ===== LOGIN / SESIÓN ===== */
 function showApp(){
   document.getElementById('loginGate').style.display='none';
@@ -828,6 +1251,10 @@ document.getElementById('loginPass').addEventListener('keydown', e=>{ if(e.key==
   const { data: { session } } = await sb.auth.getSession();
   if(session) showApp();
 })();
+
+if('serviceWorker' in navigator){
+  window.addEventListener('load', ()=>{ navigator.serviceWorker.register('/sw.js').catch(()=>{}); });
+}
 </script>
 </div>
 </body>

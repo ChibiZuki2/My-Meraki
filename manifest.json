@@ -1,0 +1,15 @@
+{
+  "name": "My Merakiyo — El mapa de quien seré",
+  "short_name": "Merakiyo",
+  "description": "El mapa de quien seré: mi mundo personal para construir, paso a paso, la persona que quiero llegar a ser.",
+  "start_url": "/index.html",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#0a0a0a",
+  "theme_color": "#0a0a0a",
+  "orientation": "portrait-primary",
+  "icons": [
+    { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
+    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}
