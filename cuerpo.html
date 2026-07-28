@@ -891,6 +891,7 @@ async function loadWeightLog(){
   const { data } = await sb.from('weight_log').select('date,weight').order('date',{ascending:true});
   WEIGHT_LOG = data || [];
   renderWeightTrend();
+  if(WEIGHT_LOG.length && typeof renderPeso==='function') renderPeso();
 }
 
 /* ===== HÁBITOS DIARIOS — tarjetas flip, real desde Supabase (incluye agua bidireccional) ===== */
@@ -1095,11 +1096,14 @@ updateScore();
 function startApp(){
   initHoyData();
   sb.channel('cuerpo-sync')
-    .on('postgres_changes', {event:'*', schema:'public', table:'habits_daily_log'}, loadHabitsDaily)
+    .on('postgres_changes', {event:'*', schema:'public', table:'habits_daily_log'}, ()=>{ loadHabitsDaily(); loadMesRealData(mesViewY,mesViewM).then(renderMes); })
     .on('postgres_changes', {event:'*', schema:'public', table:'habits_freq_log'}, loadHabitsFreq)
-    .on('postgres_changes', {event:'*', schema:'public', table:'meds_log'}, loadMeds)
+    .on('postgres_changes', {event:'*', schema:'public', table:'meds_log'}, ()=>{ loadMeds(); loadMesRealData(mesViewY,mesViewM).then(renderMes); })
     .on('postgres_changes', {event:'*', schema:'public', table:'weekly_goals'}, loadWeeklyGoals)
     .on('postgres_changes', {event:'*', schema:'public', table:'weight_log'}, loadWeightLog)
+    .on('postgres_changes', {event:'*', schema:'public', table:'obj_months'}, loadObjMonths)
+    .on('postgres_changes', {event:'*', schema:'public', table:'semana_videos'}, loadSemanaVideos)
+    .on('postgres_changes', {event:'*', schema:'public', table:'repo_videos'}, loadRepoVideos)
     .subscribe();
 }
 async function initHoyData(){
@@ -1108,6 +1112,11 @@ async function initHoyData(){
   await loadHabitsFreq();
   await loadMeds();
   await loadWeeklyGoals();
+  await loadObjMonths();
+  await loadMesRealData(mesViewY, mesViewM);
+  renderMes();
+  await loadSemanaVideos();
+  await loadRepoVideos();
   updateScore();
 }
 
@@ -1174,17 +1183,34 @@ const realNow = new Date();
 const realY = realNow.getFullYear(), realM = realNow.getMonth(), realToday = realNow.getDate();
 let mesViewY = realY, mesViewM = realM;
 
-/* pseudo-random determinístico por fila/día, para que la demo se vea consistente
-   sin tener que guardar 22 x 31 booleans a mano */
+/* pseudo-random determinístico por fila/día — ahora SOLO se usa para los hábitos
+   por frecuencia (fila "f_"), porque esos solo se guardan como contador semanal
+   en Supabase, no día por día. Hábitos diarios ("d_") y medicamentos ("m_") ya
+   usan datos 100% reales, ver mesRealData más abajo. */
 function mesPseudo(id, y, m, day){
   const s = id+'|'+y+'|'+m+'|'+day;
   let h = 0;
   for(let i=0;i<s.length;i++){ h = (h*31 + s.charCodeAt(i)) | 0; }
   return (Math.abs(h) % 1000) / 1000;
 }
-/* overrides = lo que el usuario marca/desmarca a mano, pisa el valor pseudo-random */
+/* overrides = lo que el usuario marca/desmarca a mano en filas de frecuencia (demo local) */
 const mesOverrides = {}; // key: "y-m|habitId|day" -> true/false
 function mesKey(y,m,habitId,day){ return y+'-'+m+'|'+habitId+'|'+day; }
+
+/* datos REALES desde Supabase para hábitos diarios y medicamentos, por mes visto */
+let mesRealData = {}; // key: "d_habitId|day" o "m_medId|day" -> true/false
+async function loadMesRealData(y,m){
+  const daysInMonth = mesDaysInMonth(y,m);
+  const start = y+'-'+String(m+1).padStart(2,'0')+'-01';
+  const end = y+'-'+String(m+1).padStart(2,'0')+'-'+String(daysInMonth).padStart(2,'0');
+  mesRealData = {};
+  const [{data:dLogs}, {data:mLogs}] = await Promise.all([
+    sb.from('habits_daily_log').select('habit_id,date,done').gte('date',start).lte('date',end),
+    sb.from('meds_log').select('med_id,date,done').gte('date',start).lte('date',end),
+  ]);
+  (dLogs||[]).forEach(l=>{ const day = +l.date.slice(8,10); mesRealData['d_'+l.habit_id+'|'+day] = !!l.done; });
+  (mLogs||[]).forEach(l=>{ const day = +l.date.slice(8,10); mesRealData['m_'+l.med_id+'|'+day] = !!l.done; });
+}
 
 /* El plan real arranca el lunes 27-jul-2026: antes de esa fecha no hay datos reales,
    así que no se debe generar relleno pseudo-random (evita progreso/racha falsos). */
@@ -1192,6 +1218,9 @@ const PLAN_START = new Date(2026,6,27);
 function mesState(habit, y, m, day, lastEditable){
   if(day > lastEditable) return null; // futuro, sin dato
   if(new Date(y,m,day) < PLAN_START) return null; // antes del arranque real, sin dato
+  if(habit.id.startsWith('d_') || habit.id.startsWith('m_')){
+    return mesRealData[habit.id+'|'+day] === true; // dato real; si no hay registro, cuenta como no-hecho
+  }
   const k = mesKey(y,m,habit.id,day);
   if(k in mesOverrides) return mesOverrides[k];
   return mesPseudo(habit.id, y, m, day) < habit.prob;
@@ -1282,7 +1311,7 @@ function renderMes(){
     </div>`;
 }
 
-document.getElementById('mesTable').addEventListener('click', (e)=>{
+document.getElementById('mesTable').addEventListener('click', async (e)=>{
   const cell = e.target.closest('.mcell');
   if(!cell || cell.classList.contains('future')) return;
   const habitId = cell.dataset.habit, day = +cell.dataset.day;
@@ -1291,22 +1320,36 @@ document.getElementById('mesTable').addEventListener('click', (e)=>{
   const lastEditable = isCurrentMonth ? realToday : daysInMonth;
   const habit = MES_ALL_ROWS.find(h=>h.id===habitId);
   const current = mesState(habit, mesViewY, mesViewM, day, lastEditable);
-  mesOverrides[mesKey(mesViewY, mesViewM, habitId, day)] = !current;
+  const next = !current;
   blip(current?500:850,.06,'square',.04);
-  renderMes();
+  const dateISO = mesViewY+'-'+String(mesViewM+1).padStart(2,'0')+'-'+String(day).padStart(2,'0');
+  if(habitId.startsWith('d_')){
+    mesRealData[habitId+'|'+day] = next;
+    renderMes();
+    await sb.from('habits_daily_log').upsert({ habit_id: habitId.slice(2), date: dateISO, done: next });
+  } else if(habitId.startsWith('m_')){
+    mesRealData[habitId+'|'+day] = next;
+    renderMes();
+    await sb.from('meds_log').upsert({ med_id: habitId.slice(2), date: dateISO, done: next });
+  } else {
+    mesOverrides[mesKey(mesViewY, mesViewM, habitId, day)] = next;
+    renderMes();
+  }
 });
-document.getElementById('mesPrev').addEventListener('click', ()=>{
+document.getElementById('mesPrev').addEventListener('click', async ()=>{
   blip(500,.05,'square',.03);
   mesViewM--; if(mesViewM<0){ mesViewM=11; mesViewY--; }
+  await loadMesRealData(mesViewY, mesViewM);
   renderMes();
 });
-document.getElementById('mesNext').addEventListener('click', ()=>{
+document.getElementById('mesNext').addEventListener('click', async ()=>{
   if(mesViewY===realY && mesViewM===realM) return;
   blip(500,.05,'square',.03);
   mesViewM++; if(mesViewM>11){ mesViewM=0; mesViewY++; }
+  await loadMesRealData(mesViewY, mesViewM);
   renderMes();
 });
-renderMes();
+/* renderMes() inicial ahora se dispara desde initHoyData(), tras cargar mesRealData */
 
 /* ===================================================================
    ===== PESO =====
@@ -1451,14 +1494,18 @@ function renderWAdd(){
     <button id="wAddBtn">${existing?'↺ Actualizar registro':'✓ Guardar registro'}</button>
     ${existing?'<span class="wadd-done">✓ ya registrado esta semana — se sincroniza con Hoy</span>':''}
   `;
-  document.getElementById('wAddBtn').addEventListener('click', ()=>{
+  document.getElementById('wAddBtn').addEventListener('click', async ()=>{
     const val = parseFloat(document.getElementById('wAddInput').value);
     if(isNaN(val) || val<=0){ blip(180,.1,'square',.05); return; }
     if(existing){ existing.weight = val; }
     else { WEIGHT_LOG.push({date:mondayISO, weight:val}); }
     blip(750,.08,'sine',.05); setTimeout(()=>blip(1000,.1,'sine',.05),90);
-    const goal = WEEKLY_GOALS.find(g=>g.name==='Pesarse lunes en ayuno y registrar');
-    if(goal && goal.done < goal.target){ goal.done = goal.target; renderGoals(); }
+    await sb.from('weight_log').upsert({ date: mondayISO, weight: val });
+    const goal = WEEKLY_GOALS.find(g=>g.name.includes('Pesarse'));
+    if(goal && goal.done < goal.target){
+      goal.done = goal.target; renderGoals();
+      await sb.from('weekly_goals').update({ done: goal.done }).eq('id', goal.id);
+    }
     renderWeightTrend();
     renderPeso();
   });
@@ -1484,78 +1531,33 @@ function renderPeso(){
   renderWAdd();
   renderMonthlyGoalLeft();
 }
-renderPeso();
+/* renderPeso() ahora se llama desde loadWeightLog(), una vez hay datos reales */
 
 /* ===================================================================
    ===== OBJETIVOS =====
    =================================================================== */
 
-const OBJ_MONTHS = [
-  {key:'julio', label:'Julio', sub:'Arranque', m:[6], items:[
-    {t:'Bajar a 96kg', r:'Peso de arranque ✓', done:false},
-    {t:'Levantarse en <10 min al despertar', r:'Rutina mañana', done:false},
-    {t:'Acostarse máx. 3am a fin de mes', r:'Horario de sueño', done:false},
-    {t:'Crear vision board', r:'Vision board listo', done:false},
-    {t:'Cuerpo&Salud 100% funcional en celular y web', r:'Área funcionando', done:false},
-    {t:'Comenzar tratamiento hongos pies + foto semana a semana', r:'Tratamiento iniciado', done:false},
-    {t:'Registrar el lunes el primer peso oficial + foto cuerpo completo', r:'Registro oficial hecho', done:false},
-    {t:'Primer avance del proyecto completo funcionando', r:'Proyecto avanzando', done:false},
-    {t:'Definir rutina de ejercicios completa', r:'Rutina definida', done:false},
-  ]},
-  {key:'agosto', label:'Agosto', sub:'Prioridad trabajo', m:[7], items:[
-    {t:'Bajar a 92-93kg', r:'Peso de agosto ✓', done:false},
-    {t:'Hábitos diarios 80%+ de constancia promedio', r:'80%+ hábitos', done:false},
-    {t:'Portafolio con al menos 2 proyectos (Excel/Power BI u otro)', r:'2 proyectos listos', done:false},
-    {t:'Ser constante en el registro semanal', r:'Registro semanal ✓', done:false},
-    {t:'Entrenar 4-5x por semana de manera constante', r:'Entreno constante', done:false},
-    {t:'Comenzar a trabajar antes de fin de mes', r:'¡Trabajo conseguido!', done:false, priority:true},
-    {t:'Constancia foto pies semanal', r:'Foto pies al día', done:false},
-    {t:'Foto cuerpo completo primer día del mes', r:'Foto registrada', done:false},
-    {t:'CV actualizado y enviado a al menos 7 lugares', r:'CV enviado', done:false},
-    {t:'Leer al menos 1 libro', r:'Libro leído', done:false},
-  ]},
-  {key:'septiembre', label:'Septiembre', sub:'Consistencia', m:[8], items:[
-    {t:'Bajar a 88-89kg', r:'Peso de septiembre ✓', done:false},
-    {t:'Portafolio con al menos 3-4 proyectos', r:'3-4 proyectos', done:false},
-    {t:'Leer al menos 1 libro', r:'Libro leído', done:false},
-    {t:'Continuar constancia foto pies + registro semanal', r:'Constancia mantenida', done:false},
-    {t:'Aprender a usar una herramienta nueva (IA, curso, etc.)', r:'Herramienta nueva', done:false},
-    {t:'Hábitos diarios 85%+ de constancia', r:'85%+ hábitos', done:false},
-    {t:'Primer boceto e idea de ingreso pasivo', r:'Idea de ingreso pasivo', done:false},
-    {t:'Primer proyecto creativo terminado', r:'Proyecto creativo ✓', done:false},
-  ]},
-  {key:'octubre', label:'Octubre', sub:'Aceleración', m:[9], items:[
-    {t:'Bajar a 85-86kg', r:'Peso de octubre ✓', done:false},
-    {t:'Hábitos diarios sobre 90%', r:'90%+ hábitos', done:false},
-    {t:'Leer al menos 1 libro', r:'Libro leído', done:false},
-    {t:'Red social o página web con mis creaciones', r:'Web/RRSS lista', done:false},
-    {t:'Constancia fotos cuerpo y hongos — cambios ya visibles', r:'Cambios visibles', done:false},
-    {t:'Revisión de todo el avance del proyecto (ajustar, replantear)', r:'Revisión hecha', done:false},
-  ]},
-  {key:'noviembre', label:'Noviembre', sub:'Consolidación', m:[10], items:[
-    {t:'Bajar a 82-83kg', r:'Peso de noviembre ✓', done:false},
-    {t:'Hábitos diarios sobre 95%', r:'95%+ hábitos', done:false},
-    {t:'Constancia fotos pies y cuerpo', r:'Fotos al día', done:false},
-    {t:'Leer al menos 1 libro', r:'Libro leído', done:false},
-    {t:'Red social o web con varias creaciones + roadmap artístico', r:'Roadmap artístico', done:false},
-    {t:'Trabajando con estabilidad + comenzar idea de ingreso pasivo', r:'Estabilidad laboral', done:false},
-    {t:'Planificar salidas junto a Gowi', r:'Salidas planificadas', done:false},
-    {t:'Planificar lista de deseos de compras de ambos', r:'Lista de deseos lista', done:false},
-    {t:'Iniciar primer manual/comic/historia/libro', r:'Comic iniciado', done:false},
-  ]},
-  {key:'diciembre', label:'Diciembre', sub:'Cierre de año', m:[11], items:[
-    {t:'Bajar a 79-81kg (mantener peso y sumar músculo)', r:'Peso de diciembre ✓', done:false},
-    {t:'Hábitos diarios sobre 95%', r:'95%+ hábitos', done:false},
-    {t:'Leer al menos 1 libro', r:'Libro leído', done:false},
-    {t:'Fotos hongos — casi sin hongos a esta altura', r:'Pies casi sanos', done:false},
-    {t:'Revisar y replantear todo para el año siguiente', r:'Plan 2027 listo', done:false},
-    {t:'Portafolio con al menos 5 proyectos', r:'5+ proyectos', done:false},
-    {t:'Planificación de ahorros, gastos y proyección', r:'Finanzas planificadas', done:false},
-    {t:'Primer boceto comic/historia/libro', r:'Boceto listo', done:false},
-    {t:'Mejora visual completa al proyecto y a la web/RRSS artística', r:'Rediseño evaluado', done:false},
-    {t:'Comparar fotos de julio (pies y cuerpo) con las de inicio de diciembre', r:'Comparación hecha', done:false},
-  ]},
-];
+const OBJ_MONTH_META = {
+  7:{key:'julio', label:'Julio', sub:'Arranque'},
+  8:{key:'agosto', label:'Agosto', sub:'Prioridad trabajo'},
+  9:{key:'septiembre', label:'Septiembre', sub:'Consistencia'},
+  10:{key:'octubre', label:'Octubre', sub:'Aceleración'},
+  11:{key:'noviembre', label:'Noviembre', sub:'Consolidación'},
+  12:{key:'diciembre', label:'Diciembre', sub:'Cierre de año'},
+};
+let OBJ_MONTHS = [];
+async function loadObjMonths(){
+  const { data } = await sb.from('obj_months').select('id,month,title,done,priority').order('month').order('id');
+  const byMonth = {};
+  (data||[]).forEach(row=>{
+    const meta = OBJ_MONTH_META[row.month];
+    if(!meta) return;
+    if(!byMonth[row.month]) byMonth[row.month] = {key:meta.key, label:meta.label, sub:meta.sub, m:[row.month-1], items:[]};
+    byMonth[row.month].items.push({ id: row.id, t: row.title, r: '¡Cumplido!', done: !!row.done, priority: !!row.priority });
+  });
+  OBJ_MONTHS = Object.keys(byMonth).sort((a,b)=>a-b).map(k=>byMonth[k]);
+  renderObjetivos();
+}
 
 function objItemRow(it, monthKey, idx){
   const done = !!it.done;
@@ -1591,7 +1593,7 @@ function renderObjetivos(){
   }).join('');
 }
 
-document.getElementById('tab-objetivos').addEventListener('click', (e)=>{
+document.getElementById('tab-objetivos').addEventListener('click', async (e)=>{
   const wrap = e.target.closest('.oflip-wrap');
   if(!wrap) return;
   const monthKey = wrap.dataset.month, idx = +wrap.dataset.idx;
@@ -1599,6 +1601,7 @@ document.getElementById('tab-objetivos').addEventListener('click', (e)=>{
   const wasDone = !!arr[idx].done;
   arr[idx].done = !wasDone;
   blip(wasDone?500:900, .06, 'square', .04);
+  await sb.from('obj_months').update({ done: wasDone?0:1 }).eq('id', arr[idx].id);
   if(!wasDone){
     wrap.classList.add('flipped');
     setTimeout(renderObjetivos, 1300);
@@ -1606,7 +1609,6 @@ document.getElementById('tab-objetivos').addEventListener('click', (e)=>{
     renderObjetivos();
   }
 });
-renderObjetivos();
 
 /* ===================================================================
    ===== SEMANA =====
@@ -1684,24 +1686,25 @@ function renderSemana(){
 }
 renderSemana();
 
-/* ===== GUÍA EN VIDEO POR CATEGORÍA — editable (agregar/quitar) ===== */
+/* ===== GUÍA EN VIDEO POR CATEGORÍA — editable (agregar/quitar), real desde Supabase ===== */
 let VIDEO_CATS = [
-  {emoji:'🌬️', title:'Wim Hof', links:[
-    {t:'Método Wim Hof completo', u:'https://www.youtube.com/results?search_query='+encodeURIComponent('Método Wim Hof completo')},
-    {t:'Respiración guiada 20 min', u:'https://www.youtube.com/results?search_query='+encodeURIComponent('Respiración guiada 20 min')} ]},
-  {emoji:'🧘', title:'Estiramientos', links:[
-    {t:'Rutina de estiramiento full body', u:'https://www.youtube.com/results?search_query='+encodeURIComponent('Rutina de estiramiento full body')},
-    {t:'Movilidad cadera y espalda', u:'https://www.youtube.com/results?search_query='+encodeURIComponent('Movilidad cadera y espalda')} ]},
-  {emoji:'🧖', title:'Facial', links:[
-    {t:'Masaje facial linfático', u:'https://www.youtube.com/results?search_query='+encodeURIComponent('Masaje facial linfático')},
-    {t:'Ejercicios faciales tonificación', u:'https://www.youtube.com/results?search_query='+encodeURIComponent('Ejercicios faciales tonificación')} ]},
-  {emoji:'👁️', title:'Ojos', links:[
-    {t:'Ejercicios oculares para la vista', u:'https://www.youtube.com/results?search_query='+encodeURIComponent('Ejercicios oculares para la vista')},
-    {t:'Rutina 20-20-20 pantallas', u:'https://www.youtube.com/results?search_query='+encodeURIComponent('Rutina 20-20-20 pantallas')} ]},
-  {emoji:'😤', title:'Mewing', links:[
-    {t:'Mewing técnica correcta', u:'https://www.youtube.com/results?search_query='+encodeURIComponent('Mewing técnica correcta')},
-    {t:'Chin tucks postura de cuello', u:'https://www.youtube.com/results?search_query='+encodeURIComponent('Chin tucks postura de cuello')} ]},
+  {key:'wimhof', emoji:'🌬️', title:'Wim Hof', links:[]},
+  {key:'estiramientos', emoji:'🧘', title:'Estiramientos', links:[]},
+  {key:'facial', emoji:'🧖', title:'Facial', links:[]},
+  {key:'ojos', emoji:'👁️', title:'Ojos', links:[]},
+  {key:'mewing', emoji:'😤', title:'Mewing', links:[]},
 ];
+async function loadSemanaVideos(){
+  const { data } = await sb.from('semana_videos').select('id,cat,title,url').order('id');
+  VIDEO_CATS.forEach(c=>c.links=[]);
+  (data||[]).forEach(row=>{
+    const cat = VIDEO_CATS.find(c=>c.key===row.cat);
+    if(!cat) return;
+    const u = row.url || ('https://www.youtube.com/results?search_query='+encodeURIComponent(row.title));
+    cat.links.push({id:row.id, t:row.title, u});
+  });
+  renderVideoGrid();
+}
 function renderVideoGrid(){
   document.getElementById('videoGrid').innerHTML = VIDEO_CATS.map((cat,i)=>`
     <div class="video-cat" style="animation-delay:${i*70}ms">
@@ -1723,23 +1726,29 @@ function renderVideoGrid(){
       </div>
     </div>`).join('');
 }
-function addVideoLink(i){
+async function addVideoLink(i){
   const titleInp = document.getElementById('vAddTitle-'+i);
   const urlInp = document.getElementById('vAddUrl-'+i);
   const t = titleInp.value.trim();
   if(!t){ blip(180,.1,'square',.05); return; }
   let u = urlInp.value.trim();
-  if(!u) u = 'https://www.youtube.com/results?search_query='+encodeURIComponent(t);
-  VIDEO_CATS[i].links.push({t,u});
+  const cat = VIDEO_CATS[i];
+  const { data, error } = await sb.from('semana_videos').insert({ cat: cat.key, title: t, url: u || null }).select().single();
+  if(error){ blip(180,.1,'square',.05); return; }
+  const finalUrl = u || ('https://www.youtube.com/results?search_query='+encodeURIComponent(t));
+  cat.links.push({id:data.id, t, u:finalUrl});
   blip(750,.08,'sine',.05); setTimeout(()=>blip(1000,.1,'sine',.05),90);
   renderVideoGrid();
 }
-function delVideoLink(i,j){
-  VIDEO_CATS[i].links.splice(j,1);
+async function delVideoLink(i,j){
+  const cat = VIDEO_CATS[i];
+  const link = cat.links[j];
+  cat.links.splice(j,1);
   blip(300,.05,'square',.03);
   renderVideoGrid();
+  await sb.from('semana_videos').delete().eq('id', link.id);
 }
-renderVideoGrid();
+/* renderVideoGrid() inicial ahora se dispara desde loadSemanaVideos() */
 
 /* ===================================================================
    ===== REPOSITORIO =====
@@ -1757,11 +1766,18 @@ const REPO_CATS = [
 /* semilla de ejemplo — usan enlace de búsqueda igual que en SEMANA, así que
    muestran el ícono de categoría en vez de miniatura real hasta que pegues
    un link de YouTube o TikTok de verdad con "agregar video" */
-let repoVideos = [
-  {id:'seed1', cat:'wim', title:'Método Wim Hof completo', desc:'Guía base para la respiración — la que uso los días que toca.', url:'https://www.youtube.com/results?search_query='+encodeURIComponent('Método Wim Hof completo')},
-  {id:'seed2', cat:'estira', title:'Rutina de estiramiento full body', desc:'Movilidad general, sirve como calentamiento o cierre del día.', url:'https://www.youtube.com/results?search_query='+encodeURIComponent('Rutina de estiramiento full body')},
-  {id:'seed3', cat:'facial', title:'Masaje facial linfático', desc:'Para los días que toca cuidado facial.', url:'https://www.youtube.com/results?search_query='+encodeURIComponent('Masaje facial linfático')},
-];
+let repoVideos = [];
+async function loadRepoVideos(){
+  const { data } = await sb.from('repo_videos').select('id,cat,title,url,descripcion').order('id');
+  repoVideos = (data||[]).map(r=>({
+    id: r.id,
+    cat: r.cat,
+    title: r.title,
+    desc: r.descripcion || 'Sin descripción todavía.',
+    url: r.url || ('https://www.youtube.com/results?search_query='+encodeURIComponent(r.title)),
+  }));
+  renderRepo();
+}
 let repoActiveCat = 'all';
 const tkThumbCache = {}; // url -> thumbnail_url ya resuelto por oEmbed
 
@@ -1809,7 +1825,7 @@ function renderRepo(){
     const platTag = plat==='yt' ? '<div class="repo-plat-tag yt">YouTube</div>' : plat==='tk' ? '<div class="repo-plat-tag tk">TikTok</div>' : '';
     const ytThumb = plat==='yt' ? ytThumbFromUrl(v.url) : null;
     return `<div class="repo-card" style="animation-delay:${i*55}ms">
-      <span class="repo-del" onclick="delRepoVideo('${v.id}')" title="Quitar video">✕</span>
+      <span class="repo-del" onclick="delRepoVideo(${v.id})" title="Quitar video">✕</span>
       <div class="repo-thumb" id="repoThumb-${i}">
         <span class="rt-emoji">${cat.emoji}</span>
         ${ytThumb ? `<img src="${ytThumb}" alt="" onload="this.previousElementSibling.style.display='none'">` : ''}
@@ -1849,26 +1865,29 @@ function openRepoAdd(){
   blip(500,.05,'square',.03);
 }
 function closeRepoAdd(){ document.getElementById('repoModal').classList.remove('open'); blip(400,.05,'square',.03); }
-function saveRepoVideo(){
+async function saveRepoVideo(){
   const cat = document.getElementById('repoFCat').value;
   const url = document.getElementById('repoFUrl').value.trim();
   const title = document.getElementById('repoFTitle').value.trim();
   const desc = document.getElementById('repoFDesc').value.trim();
   if(!url || !title){ blip(180,.1,'square',.05); return; }
-  repoVideos.push({id:'v'+Date.now(), cat, url, title, desc: desc || 'Sin descripción todavía.'});
+  const { data, error } = await sb.from('repo_videos').insert({ cat, title, url, descripcion: desc || null }).select().single();
+  if(error){ blip(180,.1,'square',.05); return; }
+  repoVideos.push({id:data.id, cat, url, title, desc: desc || 'Sin descripción todavía.'});
   document.getElementById('repoFUrl').value=''; document.getElementById('repoFTitle').value=''; document.getElementById('repoFDesc').value='';
   closeRepoAdd();
   blip(750,.08,'sine',.05); setTimeout(()=>blip(1000,.1,'sine',.05),90);
   renderRepo();
 }
-function delRepoVideo(id){
+async function delRepoVideo(id){
   repoVideos = repoVideos.filter(v=>v.id!==id);
   blip(300,.05,'square',.03);
   renderRepo();
+  await sb.from('repo_videos').delete().eq('id', id);
 }
 document.getElementById('repoModal').addEventListener('click', (e)=>{ if(e.target.id==='repoModal') closeRepoAdd(); });
 
-renderRepo();
+/* renderRepo() inicial ahora se dispara desde loadRepoVideos() */
 
 /* ===== LOGIN / SESIÓN ===== */
 function showApp(){
