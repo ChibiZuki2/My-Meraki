@@ -154,6 +154,10 @@ body{background:var(--black);font-family:var(--f-mono);color:var(--paper);}
 .hflip-front .h-cat{ font-family:var(--f-mono); font-size:8px; color:#7a756e; letter-spacing:.05em; text-transform:uppercase; }
 .hflip-back{ transform:rotateY(180deg); justify-content:center; background:var(--accent); border-color:var(--accent); }
 .hflip-back span{ font-family:'Archivo Black',sans-serif; font-size:10.5px; color:var(--black); text-transform:uppercase; letter-spacing:.5px; }
+.hflip-front.done.green{ background:rgba(46,207,107,.15); border-color:var(--green); }
+.hflip-front.green .h-check{ }
+.hflip-front.done.green .h-check{ background:var(--green); border-color:var(--green); }
+.hflip-back.green{ background:var(--green); border-color:var(--green); }
 .shine{ position:relative; overflow:hidden; }
 .shine::after{ content:""; position:absolute; top:0; left:-60%; width:40%; height:100%; background:linear-gradient(90deg, transparent, rgba(255,255,255,.35), transparent); animation:shineMove .55s ease; }
 @keyframes shineMove{ from{left:-60%;} to{left:120%;} }
@@ -488,7 +492,7 @@ line.chart-grid{ stroke:rgba(245,242,236,.08); stroke-dasharray:2 3; }
 
   /* Medicamentos y suplementos en 2x2 en vez de 4 filas */
   #medBody{ display:grid; grid-template-columns:1fr 1fr; gap:8px; }
-  #medBody .med-row{ margin-bottom:0; }
+  #medBody .hflip-wrap{ margin-bottom:0; }
 }
 
 /* ===== LOGIN GATE ===== */
@@ -600,7 +604,7 @@ line.chart-grid{ stroke:rgba(245,242,236,.08); stroke-dasharray:2 3; }
           <div class="card-body">
             <div class="frase-box" id="fraseDia">"El cuerpo que tendrás en diciembre se construye con lo que hagas hoy."</div>
             <div class="nota-label">Nota rápida de hoy</div>
-            <textarea class="nota-input" placeholder="Escribe algo sobre cómo te sientes hoy..."></textarea>
+            <textarea class="nota-input" id="notaRapidaInput" placeholder="Escribe algo sobre cómo te sientes hoy..."></textarea>
           </div>
         </div>
       </div>
@@ -920,6 +924,7 @@ function renderHabits(){
         renderWater();
         blip(wasDone?500:900, .06, 'square', .04);
         await sb.from('habits_daily_log').upsert({ habit_id:'agua8', date:todayISO(), done:!wasDone });
+        await sb.from('water_log').upsert({ date:todayISO(), count:waterCount });
         if(!wasDone){ wrap.classList.add('flipped'); setTimeout(()=>{ renderHabits(); updateScore(); }, 1300); }
         else { renderHabits(); updateScore(); }
         return;
@@ -941,10 +946,31 @@ async function loadHabitsDaily(){
   HABITS_DAILY.forEach(h=>{ dailyDone[h.id]=false; });
   const { data } = await sb.from('habits_daily_log').select('habit_id,done').eq('date', todayISO());
   (data||[]).forEach(l=>{ if(l.done) dailyDone[l.habit_id]=true; });
-  waterCount = dailyDone.agua8 ? 8 : 0;
   renderHabits();
+}
+
+/* ===== AGUA — conteo exacto (0-8) real desde Supabase, independiente del booleano del hábito ===== */
+async function loadWaterLog(){
+  const { data } = await sb.from('water_log').select('count').eq('date', todayISO()).maybeSingle();
+  waterCount = data?.count || 0;
   renderWater();
 }
+
+/* ===== NOTA RÁPIDA DE HOY — real desde Supabase, 1 nota por día ===== */
+let notaSaveTimer = null;
+async function loadNotaRapida(){
+  const { data } = await sb.from('notas_rapidas').select('texto').eq('date', todayISO()).maybeSingle();
+  document.getElementById('notaRapidaInput').value = data?.texto || '';
+}
+function scheduleNotaSave(){
+  clearTimeout(notaSaveTimer);
+  notaSaveTimer = setTimeout(async ()=>{
+    const texto = document.getElementById('notaRapidaInput').value;
+    await sb.from('notas_rapidas').upsert({ date: todayISO(), texto, updated_at: new Date().toISOString() });
+  }, 800);
+}
+document.getElementById('notaRapidaInput').addEventListener('input', scheduleNotaSave);
+document.getElementById('notaRapidaInput').addEventListener('blur', scheduleNotaSave);
 
 /* ===== HÁBITOS POR FRECUENCIA — real desde Supabase (contador semanal) ===== */
 const freqBody = document.getElementById('freqBody');
@@ -984,15 +1010,25 @@ function renderMeds(){
   medBody.innerHTML='';
   MEDS.forEach(m=>{
     const taken = !!medsTaken[m.id];
-    const row = document.createElement('div'); row.className='med-row'+(taken?' taken':'');
-    row.innerHTML = `<div class="check">✓</div><div class="mname">${m.name}</div>`;
-    row.addEventListener('click', async ()=>{
-      medsTaken[m.id] = !medsTaken[m.id];
-      renderMeds();
-      blip(medsTaken[m.id]?850:500,.06,'square',.04);
-      await sb.from('meds_log').upsert({ med_id:m.id, date:todayISO(), done:medsTaken[m.id] });
+    const wrap = document.createElement('div'); wrap.className='hflip-wrap'+(taken?' flipped':'');
+    wrap.innerHTML = `
+      <div class="hflip-inner">
+        <div class="hflip-front green${taken?' done':''}">
+          <div class="h-emoji">💊</div>
+          <div class="h-check">${taken?'✓':''}</div>
+          <div class="h-info"><div class="h-name">${m.name}</div></div>
+        </div>
+        <div class="hflip-back green"><span>✅ Tomado</span></div>
+      </div>`;
+    wrap.addEventListener('click', async ()=>{
+      const wasTaken = !!medsTaken[m.id];
+      medsTaken[m.id] = !wasTaken;
+      blip(wasTaken?500:900,.06,'square',.04);
+      await sb.from('meds_log').upsert({ med_id:m.id, date:todayISO(), done:!wasTaken });
+      if(!wasTaken){ wrap.classList.add('flipped'); setTimeout(renderMeds, 1300); }
+      else { renderMeds(); }
     });
-    medBody.appendChild(row);
+    medBody.appendChild(wrap);
   });
 }
 async function loadMeds(){
@@ -1047,6 +1083,7 @@ function renderWater(){
       renderWater();
       dailyDone['agua8'] = waterCount>=8;
       renderHabits(); updateScore();
+      await sb.from('water_log').upsert({ date: todayISO(), count: waterCount });
       await sb.from('habits_daily_log').upsert({ habit_id:'agua8', date:todayISO(), done: waterCount>=8 });
     });
     waterRow.appendChild(g);
@@ -1104,11 +1141,14 @@ function startApp(){
     .on('postgres_changes', {event:'*', schema:'public', table:'obj_months'}, loadObjMonths)
     .on('postgres_changes', {event:'*', schema:'public', table:'semana_videos'}, loadSemanaVideos)
     .on('postgres_changes', {event:'*', schema:'public', table:'repo_videos'}, loadRepoVideos)
+    .on('postgres_changes', {event:'*', schema:'public', table:'water_log'}, loadWaterLog)
     .subscribe();
 }
 async function initHoyData(){
   await loadWeightLog();
   await loadHabitsDaily();
+  await loadWaterLog();
+  await loadNotaRapida();
   await loadHabitsFreq();
   await loadMeds();
   await loadWeeklyGoals();

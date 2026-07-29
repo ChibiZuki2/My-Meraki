@@ -657,6 +657,14 @@ function todayISO(){
   const d = new Date();
   return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
 }
+function mondayOfWeekISO(){
+  const d = new Date();
+  const day = d.getDay();
+  const diff = (day===0 ? -6 : 1-day);
+  const monday = new Date(d);
+  monday.setDate(d.getDate()+diff);
+  return monday.getFullYear()+'-'+String(monday.getMonth()+1).padStart(2,'0')+'-'+String(monday.getDate()).padStart(2,'0');
+}
 const MONTH_GOALS = {7:96, 8:92.5, 9:88.5, 10:85.5, 11:82.5, 12:80};
 
 /* ===== REORDEN SOLO CELULAR (≤900px) =====
@@ -851,15 +859,46 @@ const ctxMsgs = [
 let ctxIdx=0;
 setInterval(()=>{ ctxIdx=(ctxIdx+1)%ctxMsgs.length; const el=document.getElementById('ctxText'); el.style.opacity=0; setTimeout(()=>{ el.innerHTML=ctxMsgs[ctxIdx]; el.style.opacity=1; },250); }, 6000);
 
-let wpVal = 71;
-function bumpWeek(){
-  if(wpVal>=100) return;
-  wpVal = Math.min(100, wpVal+7);
+let wpVal = 0;
+async function loadWeekProgress(){
+  const monday = mondayOfWeekISO();
+  const now = new Date();
+  const dow = now.getDay();
+  const daysElapsed = dow===0 ? 7 : dow;
+  const dates = [];
+  const m = new Date(); const diff = (m.getDay()===0?-6:1-m.getDay()); m.setDate(m.getDate()+diff);
+  for(let i=0;i<daysElapsed;i++){
+    const d = new Date(m); d.setDate(m.getDate()+i);
+    dates.push(d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'));
+  }
+  const [{data:dailyCat}, {data:dailyLogs}, {data:freqCat}, {data:freqLogs}, {data:goals}] = await Promise.all([
+    sb.from('habits_daily').select('id'),
+    sb.from('habits_daily_log').select('date,done').in('date', dates).eq('done', true),
+    sb.from('habits_freq').select('id,goal'),
+    sb.from('habits_freq_log').select('habit_id,done').eq('week_start', monday),
+    sb.from('weekly_goals').select('id,target,done').eq('week_start', monday),
+  ]);
+  const totalDaily = (dailyCat||[]).length || 9;
+  const dailyDoneCount = (dailyLogs||[]).length;
+  const dailyPosible = totalDaily*daysElapsed;
+  const dailyPct = dailyPosible>0 ? Math.min(100, (dailyDoneCount/dailyPosible)*100) : 0;
+
+  let freqDone=0, freqGoal=0;
+  const freqById = {}; (freqLogs||[]).forEach(r=>{ freqById[r.habit_id]=r.done; });
+  (freqCat||[]).forEach(f=>{ if(f.goal>0){ freqGoal += f.goal; freqDone += Math.min(freqById[f.id]||0, f.goal); } });
+  const freqPct = freqGoal>0 ? Math.min(100,(freqDone/freqGoal)*100) : 0;
+
+  let goalsDone=0, goalsTarget=0;
+  (goals||[]).forEach(g=>{ goalsTarget+=g.target; goalsDone+=Math.min(g.done,g.target); });
+  const goalsPct = goalsTarget>0 ? Math.min(100,(goalsDone/goalsTarget)*100) : 0;
+
+  wpVal = Math.round((dailyPct+freqPct+goalsPct)/3);
   document.getElementById('wpFill').style.width = wpVal+'%';
   document.getElementById('wpPctNum').textContent = wpVal;
-  blip(500,.05,'square',.03);
+  document.querySelector('#weekProg .wp-hint').textContent = `${dailyDoneCount} de ${dailyPosible} marcas diarias · ${Math.round(freqPct)}% frecuencia · ${Math.round(goalsPct)}% objetivos`;
   if(wpVal>=100) triggerWeekCelebration();
 }
+function bumpWeek(){ blip(500,.05,'square',.03); loadWeekProgress(); }
 function triggerWeekCelebration(){
   document.getElementById('luRank').textContent = '★';
   document.getElementById('luRank').style.opacity = '1';
@@ -1024,9 +1063,12 @@ function startApp(){
   loadHabitsHoy();
   loadPesoChip();
   loadStreak();
+  loadWeekProgress();
   sb.channel('home-sync')
-    .on('postgres_changes', {event:'*', schema:'public', table:'habits_daily_log'}, ()=>{ loadHabitsHoy(); loadStreak(); })
+    .on('postgres_changes', {event:'*', schema:'public', table:'habits_daily_log'}, ()=>{ loadHabitsHoy(); loadStreak(); loadWeekProgress(); })
     .on('postgres_changes', {event:'*', schema:'public', table:'weight_log'}, ()=>{ loadPesoChip(); })
+    .on('postgres_changes', {event:'*', schema:'public', table:'habits_freq_log'}, loadWeekProgress)
+    .on('postgres_changes', {event:'*', schema:'public', table:'weekly_goals'}, loadWeekProgress)
     .subscribe();
 }
 function triggerCelebration(rankIdx){
