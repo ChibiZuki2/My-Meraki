@@ -212,6 +212,52 @@ body{background:var(--black);font-family:var(--f-mono);cursor:default;}
 .urow.overdue{ border-color:#ff5a1f; background:linear-gradient(90deg, rgba(255,90,31,.22), rgba(179,0,27,.18)); animation:shake 2.4s infinite; }
 .urow.overdue span{ color:#fff; }
 .urow.done{ opacity:.35; text-decoration:line-through; }
+.urow .ev-del{ margin-left:8px; opacity:.5; cursor:pointer; }
+.urow .ev-del:hover{ opacity:1; color:var(--accent); }
+.ev-group-title{ font-family:var(--f-mono); font-size:10px; letter-spacing:.1em; text-transform:uppercase; color:#8a8580; margin:16px 0 6px; }
+
+/* ===== CALENDARIO VISUAL (vista mensual) ===== */
+.cal-tabs{ display:flex; gap:10px; margin-bottom:18px; }
+.cal-tab{ font-family:var(--f-mono); font-size:11px; letter-spacing:.08em; text-transform:uppercase; color:#8a8580; background:rgba(245,242,236,.04); border:1px solid rgba(245,242,236,.14); padding:9px 16px; cursor:pointer; transition:.15s; }
+.cal-tab.active{ color:var(--white); border-color:var(--accent); background:rgba(229,30,45,.14); }
+.cal-panel{ display:none; }
+.cal-panel.active{ display:block; }
+.cal-grid-card{ position:relative; background:linear-gradient(165deg, rgba(229,30,45,.07), rgba(14,13,15,.72) 55%); border:1px solid rgba(245,242,236,.1); clip-path:polygon(0 0, 100% 0, 100% 100%, 14px 100%, 0 calc(100% - 14px)); padding:20px; }
+.cal-head{ display:flex; align-items:center; justify-content:space-between; margin-bottom:16px; }
+.cal-nav-btn{ font-family:'Archivo Black',sans-serif; font-size:20px; color:var(--paper); background:none; border:1px solid rgba(245,242,236,.2); width:36px; height:36px; cursor:pointer; transition:.15s; }
+.cal-nav-btn:hover{ border-color:var(--accent); color:var(--accent); background:rgba(229,30,45,.1); }
+.cal-month-title{ font-family:var(--f-display); font-size:24px; letter-spacing:.04em; color:var(--white); text-transform:uppercase; text-shadow:2px 2px 0 rgba(0,0,0,.5); }
+.cal-weekdays{ display:grid; grid-template-columns:repeat(7,1fr); gap:6px; margin-bottom:6px; }
+.cal-weekdays span{ font-family:var(--f-mono); font-size:9.5px; letter-spacing:.1em; text-transform:uppercase; color:#8a8580; text-align:center; }
+.cal-days{ display:grid; grid-template-columns:repeat(7,1fr); gap:6px; }
+.cal-day{ position:relative; aspect-ratio:1; background:rgba(245,242,236,.03); border:1px solid rgba(245,242,236,.12); cursor:pointer; transition:.15s; padding:6px; display:flex; flex-direction:column; }
+.cal-day:hover{ border-color:var(--accent); background:rgba(229,30,45,.1); transform:scale(1.06); z-index:2; box-shadow:0 4px 14px rgba(0,0,0,.4); }
+.cal-day.empty{ visibility:hidden; cursor:default; }
+.cal-day.today{ border-color:var(--yellow); box-shadow:0 0 14px rgba(240,208,32,.45); background:rgba(240,208,32,.08); }
+.cal-day .cd-num{ font-family:'Archivo Black',sans-serif; font-size:14px; color:var(--paper); line-height:1; }
+.cal-day.today .cd-num{ color:var(--yellow); }
+.cal-day .cd-dots{ margin-top:auto; display:flex; gap:3px; flex-wrap:wrap; }
+.cal-day .cd-dot{ width:6px; height:6px; border-radius:50%; flex-shrink:0; }
+.cal-day .cd-dot.urgente{ background:var(--accent); box-shadow:0 0 5px var(--accent); }
+.cal-day .cd-dot.fecha_importante{ background:var(--yellow); box-shadow:0 0 5px var(--yellow); }
+.cal-day .cd-dot.entrega{ background:#5aa8f0; box-shadow:0 0 5px #5aa8f0; }
+.cal-day .cd-dot.general{ background:#2ecf6b; box-shadow:0 0 5px #2ecf6b; }
+
+/* modal día */
+#dayModal{ position:fixed; inset:0; background:rgba(0,0,0,.78); z-index:2000; display:none; align-items:center; justify-content:center; padding:20px; }
+#dayModal.open{ display:flex; }
+.day-modal-box{ width:min(440px,100%); max-height:82vh; overflow-y:auto; background:#141014; border:1px solid rgba(245,242,236,.16); padding:22px; position:relative; clip-path:polygon(0 0, 100% 0, 100% 100%, 16px 100%, 0 calc(100% - 16px)); }
+.day-modal-box .dm-title{ font-family:var(--f-display); font-size:20px; color:var(--white); margin-bottom:14px; letter-spacing:.03em; }
+.day-modal-box .dm-close{ position:absolute; top:14px; right:16px; cursor:pointer; opacity:.6; font-size:20px; color:var(--paper); }
+.day-modal-box .dm-close:hover{ opacity:1; color:var(--accent); }
+.dm-list{ margin-bottom:16px; }
+.dm-empty{ font-family:var(--f-mono); font-size:11px; color:#8a8580; margin-bottom:16px; }
+.dm-form{ display:flex; flex-direction:column; gap:8px; border-top:1px solid rgba(245,242,236,.12); padding-top:14px; }
+.dm-form input, .dm-form select{ background:var(--black); border:1px solid rgba(245,242,236,.18); color:var(--white); font-family:var(--f-mono); font-size:12px; padding:9px 11px; outline:none; }
+.dm-form input:focus, .dm-form select:focus{ border-color:var(--accent); }
+.dm-form select option{ background:#151014; }
+.dm-form button{ font-family:'Archivo Black',sans-serif; font-size:11px; letter-spacing:1px; text-transform:uppercase; background:var(--accent); color:var(--black); border:none; padding:10px; cursor:pointer; }
+.dm-form button:hover{ background:var(--yellow); }
 @keyframes shake{ 0%,90%,100%{transform:translateX(0);} 92%{transform:translateX(-3px);} 96%{transform:translateX(3px);} }
 
 /* 27/28 FECHAS — estilo prop4, fila con borde de prop3, números destacados como imagen 4 */
@@ -556,7 +602,75 @@ body{background:var(--black);font-family:var(--f-mono);cursor:default;}
 </div>
 <div class="subview" id="calView">
   <div class="subview-head"><div class="subview-back" onclick="closeView('calView')">← VOLVER AL HOME</div><div class="subview-title" data-txt="CALENDARIO"></div><div></div></div>
-  <div class="subview-desc"><span class="tag">EN CONSTRUCCIÓN</span><br>Panel separado del home: fechas límite, metas y fechas importantes en un solo lugar.</div>
+  <div class="subview-desc">Acá guardas cuentas por pagar, cumpleaños, entregas y cualquier fecha importante. Se muestran solos en el Home cuando falta poco.</div>
+
+  <div class="cal-tabs">
+    <div class="cal-tab active" data-cal="calLista" onclick="calSwitch('calLista')">📋 Lista</div>
+    <div class="cal-tab" data-cal="calMes" onclick="calSwitch('calMes')">📅 Vista mensual</div>
+  </div>
+
+  <div class="cal-panel active" id="calLista">
+    <div class="tn-form">
+      <input type="text" id="evTitulo" placeholder="¿Qué hay que recordar?" style="flex:1 1 100%;">
+      <select id="evTipo">
+        <option value="urgente">🔴 Urgente (cuenta, trámite, etc.)</option>
+        <option value="fecha_importante">🎂 Fecha importante</option>
+        <option value="entrega">✏️ Entrega/proyecto</option>
+        <option value="general">📌 General</option>
+      </select>
+      <select id="evPrioridad">
+        <option value="normal" selected>Prioridad normal</option>
+        <option value="alta">Prioridad alta</option>
+      </select>
+      <select id="evRecurrencia">
+        <option value="ninguna" selected>Fecha única</option>
+        <option value="semanal">Se repite cada semana</option>
+        <option value="mensual">Se repite cada mes</option>
+        <option value="anual">Se repite cada año</option>
+      </select>
+      <input type="date" id="evFecha" title="Fecha (o fecha base si es recurrente)">
+      <select id="evDiaSemana" style="display:none;">
+        <option value="1">Lunes</option><option value="2">Martes</option><option value="3">Miércoles</option>
+        <option value="4">Jueves</option><option value="5">Viernes</option><option value="6">Sábado</option>
+        <option value="0">Domingo</option>
+      </select>
+      <input type="number" id="evDiaMes" min="1" max="31" placeholder="Día del mes (1-31)" style="display:none; max-width:160px;">
+      <input type="number" id="evAvisoAntes" min="0" max="60" value="7" title="Avisar con cuántos días de anticipación" style="max-width:160px;">
+      <input type="text" id="evDesc" placeholder="Detalle opcional (ej. boceto adjunto)" style="flex:1 1 100%;">
+      <button class="tn-add" onclick="addEvento()">+ Agregar recordatorio</button>
+    </div>
+    <div id="eventosList"></div>
+  </div>
+
+  <div class="cal-panel" id="calMes">
+    <div class="cal-grid-card">
+      <div class="cal-head">
+        <button class="cal-nav-btn" onclick="calMesNav(-1)">‹</button>
+        <div class="cal-month-title" id="calMonthTitle"></div>
+        <button class="cal-nav-btn" onclick="calMesNav(1)">›</button>
+      </div>
+      <div class="cal-weekdays"><span>LUN</span><span>MAR</span><span>MIE</span><span>JUE</span><span>VIE</span><span>SAB</span><span>DOM</span></div>
+      <div class="cal-days" id="calDaysGrid"></div>
+    </div>
+  </div>
+</div>
+
+<div id="dayModal" onclick="if(event.target.id==='dayModal') closeDayModal()">
+  <div class="day-modal-box">
+    <span class="dm-close" onclick="closeDayModal()">✕</span>
+    <div class="dm-title" id="dmTitle"></div>
+    <div class="dm-list" id="dmList"></div>
+    <div class="dm-form">
+      <input type="text" id="dmTitulo" placeholder="Agregar algo para este día...">
+      <select id="dmTipo">
+        <option value="general">📌 General</option>
+        <option value="urgente">🔴 Urgente</option>
+        <option value="fecha_importante">🎂 Fecha importante</option>
+        <option value="entrega">✏️ Entrega/proyecto</option>
+      </select>
+      <button onclick="addEventoDelDia()">+ Agregar a este día</button>
+    </div>
+  </div>
 </div>
 <div class="subview" id="mejorasView">
   <div class="subview-head"><div class="subview-back" onclick="closeView('mejorasView')">← VOLVER AL HOME</div><div class="subview-title" data-txt="MEJORAS"></div><div></div></div>
@@ -899,6 +1013,273 @@ async function loadWeekProgress(){
   if(wpVal>=100) triggerWeekCelebration();
 }
 function bumpWeek(){ blip(500,.05,'square',.03); loadWeekProgress(); }
+
+/* ===== BANCO DE EVENTOS/RECORDATORIOS — alimenta el banner contextual,
+   "Urgente - top 3", "Fechas importantes", "Próxima entrega" y (más
+   adelante) las notificaciones push. Todo desde 1 sola tabla. ===== */
+let EVENTOS = [];
+
+function evNextOccurrence(ev){
+  const now = new Date(); now.setHours(0,0,0,0);
+  if(ev.recurrencia==='ninguna'){
+    return ev.fecha ? new Date(ev.fecha+'T00:00:00') : null;
+  }
+  if(ev.recurrencia==='semanal'){
+    const d = new Date(now);
+    const diff = ((ev.dia_semana - d.getDay()) + 7) % 7;
+    d.setDate(d.getDate()+diff);
+    return d;
+  }
+  if(ev.recurrencia==='mensual'){
+    let d = new Date(now.getFullYear(), now.getMonth(), ev.dia_mes);
+    if(d < now) d = new Date(now.getFullYear(), now.getMonth()+1, ev.dia_mes);
+    return d;
+  }
+  if(ev.recurrencia==='anual'){
+    if(!ev.fecha) return null;
+    const base = new Date(ev.fecha+'T00:00:00');
+    let d = new Date(now.getFullYear(), base.getMonth(), base.getDate());
+    if(d < now) d = new Date(now.getFullYear()+1, base.getMonth(), base.getDate());
+    return d;
+  }
+  return null;
+}
+function evIsDone(ev, occDate){
+  if(ev.recurrencia==='ninguna') return !!ev.completado;
+  if(!ev.completado_fecha || !occDate) return false;
+  const occISO = occDate.getFullYear()+'-'+String(occDate.getMonth()+1).padStart(2,'0')+'-'+String(occDate.getDate()).padStart(2,'0');
+  return ev.completado_fecha === occISO;
+}
+function evActivas(){
+  const now = new Date(); now.setHours(0,0,0,0);
+  return EVENTOS.map(ev=>{
+    const occ = evNextOccurrence(ev);
+    if(!occ) return null;
+    const dias = Math.round((occ-now)/86400000);
+    return { ev, occ, dias, done: evIsDone(ev,occ) };
+  }).filter(x=>x && !x.done && x.dias <= x.ev.dias_aviso_antes)
+    .sort((a,b)=> (a.ev.prioridad==='alta'?-1:0) - (b.ev.prioridad==='alta'?-1:0) || a.dias-b.dias);
+}
+function evLabelDias(dias){
+  if(dias<0) return `<b class="overdue-tag">venció hace ${Math.abs(dias)}d</b>`;
+  if(dias===0) return `<div class="u-num"><b>HOY</b></div>`;
+  return `<div class="u-num"><b>${dias}</b><span>día${dias===1?'':'s'}</span></div>`;
+}
+async function toggleEvento(id, occDateISO, esUnica){
+  if(esUnica){
+    const ev = EVENTOS.find(e=>e.id===id);
+    await sb.from('eventos').update({ completado: !ev.completado }).eq('id', id);
+  } else {
+    const ev = EVENTOS.find(e=>e.id===id);
+    const yaHecho = ev.completado_fecha === occDateISO;
+    await sb.from('eventos').update({ completado_fecha: yaHecho ? null : occDateISO }).eq('id', id);
+  }
+  blip(700,.06,'square',.04);
+}
+async function deleteEvento(id, e){
+  if(e) e.stopPropagation();
+  await sb.from('eventos').delete().eq('id', id);
+  blip(300,.05,'square',.03);
+}
+function renderEventWidgets(){
+  const activos = evActivas();
+  const urgentes = activos.filter(x=>x.ev.tipo==='urgente').slice(0,3);
+  const fechas = activos.filter(x=>x.ev.tipo==='fecha_importante').slice(0,3);
+  const entrega = activos.filter(x=>x.ev.tipo==='entrega')[0];
+
+  const urgenteWrap = document.querySelectorAll('.card-title-p4');
+  urgenteWrap.forEach(title=>{
+    if(title.textContent.trim()==='Urgente — top 3'){
+      const body = title.nextElementSibling;
+      body.innerHTML = urgentes.length ? urgentes.map(x=>`
+        <div class="urow ${x.dias<0?'overdue':''}" onclick="toggleEvento(${x.ev.id},'${x.occ.getFullYear()}-${String(x.occ.getMonth()+1).padStart(2,'0')}-${String(x.occ.getDate()).padStart(2,'0')}',${x.ev.recurrencia==='ninguna'})">
+          <span>${x.ev.icono||'📌'} ${x.ev.titulo}</span>${evLabelDias(x.dias)}
+        </div>`).join('') : '<div class="urow" style="cursor:default">Sin pendientes urgentes 🎉</div>';
+    }
+    if(title.textContent.trim()==='Fechas importantes'){
+      const body = title.nextElementSibling;
+      body.innerHTML = fechas.length ? fechas.map(x=>`
+        <div class="drow" onclick="toggleEvento(${x.ev.id},'${x.occ.getFullYear()}-${String(x.occ.getMonth()+1).padStart(2,'0')}-${String(x.occ.getDate()).padStart(2,'0')}',${x.ev.recurrencia==='ninguna'})" style="cursor:pointer">
+          <span>${x.ev.icono||'📌'} ${x.ev.titulo}</span><div class="d-num"><b>${x.dias}</b><span>día${x.dias===1?'':'s'}</span></div>
+        </div>`).join('') : '<div class="drow">Sin fechas próximas</div>';
+    }
+    if(title.textContent.trim()==='Próxima entrega'){
+      const body = title.nextElementSibling;
+      body.innerHTML = entrega ? `<div class="entrega-mini"><span class="ic">${entrega.ev.icono||'✏️'}</span><div class="txt"><b>${entrega.ev.titulo}</b>vence en ${entrega.dias} día${entrega.dias===1?'':'s'}${entrega.ev.descripcion?' · '+entrega.ev.descripcion:''}</div></div>` : '<div class="entrega-mini"><span class="ic">✏️</span><div class="txt">Sin entregas próximas</div></div>';
+    }
+  });
+
+  /* banner contextual: rota entre lo más urgente de TODOS los tipos */
+  window._ctxPool = activos;
+  if(!window._ctxRotating){
+    window._ctxRotating = true;
+    window._ctxIdx = 0;
+    renderCtxBanner();
+    setInterval(renderCtxBanner, 7000);
+  } else {
+    renderCtxBanner();
+  }
+}
+function renderCtxBanner(){
+  const pool = window._ctxPool || [];
+  const el = document.getElementById('ctxText');
+  const ic = document.querySelector('#ctxBanner .ctx-ic');
+  if(!pool.length){ el.innerHTML = '<b>Todo al día</b> — sin pendientes urgentes por ahora.'; if(ic) ic.textContent='✓'; return; }
+  window._ctxIdx = (window._ctxIdx+1) % pool.length;
+  const x = pool[window._ctxIdx];
+  if(ic) ic.textContent = x.ev.icono || '⚠';
+  const cuando = x.dias<0 ? `venció hace ${Math.abs(x.dias)}d` : x.dias===0 ? 'es hoy' : `en ${x.dias} día${x.dias===1?'':'s'}`;
+  el.innerHTML = `<b>${x.ev.titulo}</b> — ${cuando}${x.ev.descripcion?' · '+x.ev.descripcion:''}`;
+}
+
+async function addEvento(){
+  const titulo = document.getElementById('evTitulo').value.trim();
+  if(!titulo){ blip(180,.1,'square',.05); return; }
+  const tipo = document.getElementById('evTipo').value;
+  const prioridad = document.getElementById('evPrioridad').value;
+  const recurrencia = document.getElementById('evRecurrencia').value;
+  const fecha = document.getElementById('evFecha').value || null;
+  const dia_semana = recurrencia==='semanal' ? +document.getElementById('evDiaSemana').value : null;
+  const dia_mes = recurrencia==='mensual' ? +document.getElementById('evDiaMes').value : null;
+  const dias_aviso_antes = +document.getElementById('evAvisoAntes').value || 7;
+  const descripcion = document.getElementById('evDesc').value.trim() || null;
+  const iconos = {urgente:'🔴', fecha_importante:'🎂', entrega:'✏️', general:'📌'};
+  const { error } = await sb.from('eventos').insert({
+    titulo, tipo, prioridad, recurrencia, fecha, dia_semana, dia_mes,
+    dias_aviso_antes, descripcion, icono: iconos[tipo]
+  });
+  if(error){ blip(180,.1,'square',.05); return; }
+  document.getElementById('evTitulo').value=''; document.getElementById('evDesc').value='';
+  document.getElementById('evFecha').value=''; document.getElementById('evAvisoAntes').value=7;
+  blip(750,.08,'sine',.05); setTimeout(()=>blip(1000,.1,'sine',.05),90);
+  loadEventos();
+}
+function renderEventosList(){
+  const wrap = document.getElementById('eventosList');
+  if(!wrap) return;
+  if(!EVENTOS.length){ wrap.innerHTML = '<div class="tn-empty">Sin recordatorios todavía — agrega el primero arriba.</div>'; return; }
+  const rows = EVENTOS.map(ev=>{
+    const occ = evNextOccurrence(ev);
+    const now = new Date(); now.setHours(0,0,0,0);
+    const dias = occ ? Math.round((occ-now)/86400000) : null;
+    const done = evIsDone(ev, occ);
+    const occISO = occ ? (occ.getFullYear()+'-'+String(occ.getMonth()+1).padStart(2,'0')+'-'+String(occ.getDate()).padStart(2,'0')) : '';
+    const rec = ev.recurrencia==='ninguna' ? '' : ev.recurrencia==='semanal' ? ' · cada semana' : ev.recurrencia==='mensual' ? ' · cada mes' : ' · cada año';
+    return `<div class="urow ${done?'done':''} ${dias!==null && dias<0 && !done?'overdue':''}" onclick="toggleEvento(${ev.id},'${occISO}',${ev.recurrencia==='ninguna'})">
+      <span>${ev.icono||'📌'} ${ev.titulo}${rec}${ev.descripcion?' — '+ev.descripcion:''}</span>
+      <span style="display:flex;align-items:center;">${dias!==null?evLabelDias(dias):''}<span class="ev-del" onclick="deleteEvento(${ev.id},event)">✕</span></span>
+    </div>`;
+  }).join('');
+  wrap.innerHTML = rows;
+}
+async function loadEventos(){
+  const { data } = await sb.from('eventos').select('*').order('id');
+  EVENTOS = data || [];
+  renderEventosList();
+  renderEventWidgets();
+  if(document.getElementById('calMes').classList.contains('active')) renderCalGrid();
+}
+document.getElementById('evRecurrencia').addEventListener('change', (e)=>{
+  document.getElementById('evDiaSemana').style.display = e.target.value==='semanal' ? '' : 'none';
+  document.getElementById('evDiaMes').style.display = e.target.value==='mensual' ? '' : 'none';
+});
+
+/* ===== CALENDARIO VISUAL — vista mensual con cuadrícula real ===== */
+function calSwitch(id){
+  document.querySelectorAll('.cal-tab').forEach(t=>t.classList.toggle('active', t.dataset.cal===id));
+  document.querySelectorAll('.cal-panel').forEach(p=>p.classList.toggle('active', p.id===id));
+  blip(650,.05,'square',.03);
+  if(id==='calMes') renderCalGrid();
+}
+const MES_NOMBRES = ['ENERO','FEBRERO','MARZO','ABRIL','MAYO','JUNIO','JULIO','AGOSTO','SEPTIEMBRE','OCTUBRE','NOVIEMBRE','DICIEMBRE'];
+const _calNow = new Date();
+let calViewY = _calNow.getFullYear(), calViewM = _calNow.getMonth();
+function calMesNav(dir){
+  blip(500,.05,'square',.03);
+  calViewM += dir;
+  if(calViewM<0){ calViewM=11; calViewY--; }
+  if(calViewM>11){ calViewM=0; calViewY++; }
+  renderCalGrid();
+}
+function calEventosDelDia(dateISO){
+  const [y,m,d] = dateISO.split('-').map(Number);
+  const target = new Date(y,m-1,d);
+  return EVENTOS.map(ev=>{
+    if(ev.recurrencia==='ninguna'){
+      return ev.fecha===dateISO ? {ev, occISO:dateISO, done:!!ev.completado} : null;
+    }
+    const occ = evNextOccurrenceForMonth(ev, y, m-1, d);
+    if(!occ) return null;
+    return { ev, occISO:dateISO, done: evIsDone(ev, occ) };
+  }).filter(Boolean);
+}
+/* variante que evalúa si una recurrencia cae EXACTO en un día dado del calendario visual */
+function evNextOccurrenceForMonth(ev, y, m, d){
+  const day = new Date(y,m,d);
+  if(ev.recurrencia==='semanal') return day.getDay()===ev.dia_semana ? day : null;
+  if(ev.recurrencia==='mensual') return d===ev.dia_mes ? day : null;
+  if(ev.recurrencia==='anual'){
+    if(!ev.fecha) return null;
+    const base = new Date(ev.fecha+'T00:00:00');
+    return (base.getMonth()===m && base.getDate()===d) ? day : null;
+  }
+  return null;
+}
+function renderCalGrid(){
+  document.getElementById('calMonthTitle').textContent = MES_NOMBRES[calViewM]+' '+calViewY;
+  const grid = document.getElementById('calDaysGrid');
+  grid.innerHTML = '';
+  const firstDow = (new Date(calViewY, calViewM, 1).getDay()+6)%7; // 0=lunes
+  const daysInMonth = new Date(calViewY, calViewM+1, 0).getDate();
+  const todayStr = todayISO();
+  for(let i=0;i<firstDow;i++){
+    const empty = document.createElement('div'); empty.className='cal-day empty';
+    grid.appendChild(empty);
+  }
+  for(let d=1; d<=daysInMonth; d++){
+    const dateISO = calViewY+'-'+String(calViewM+1).padStart(2,'0')+'-'+String(d).padStart(2,'0');
+    const items = calEventosDelDia(dateISO).filter(x=>!x.done);
+    const cell = document.createElement('div');
+    cell.className = 'cal-day'+(dateISO===todayStr?' today':'');
+    const dotsHtml = items.slice(0,4).map(x=>`<span class="cd-dot ${x.ev.tipo}"></span>`).join('');
+    cell.innerHTML = `<span class="cd-num">${d}</span><div class="cd-dots">${dotsHtml}</div>`;
+    cell.addEventListener('click', ()=>openDayModal(dateISO));
+    grid.appendChild(cell);
+  }
+}
+let _dmDate = null;
+function openDayModal(dateISO){
+  _dmDate = dateISO;
+  blip(700,.06,'square',.04);
+  const [y,m,d] = dateISO.split('-').map(Number);
+  document.getElementById('dmTitle').textContent = d+' de '+MES_NOMBRES[m-1].charAt(0)+MES_NOMBRES[m-1].slice(1).toLowerCase()+' '+y;
+  const items = calEventosDelDia(dateISO);
+  const list = document.getElementById('dmList');
+  list.innerHTML = items.length ? items.map(x=>`
+    <div class="urow ${x.done?'done':''}" onclick="toggleEvento(${x.ev.id},'${x.occISO}',${x.ev.recurrencia==='ninguna'}); setTimeout(()=>openDayModal('${dateISO}'),150)">
+      <span>${x.ev.icono||'📌'} ${x.ev.titulo}${x.ev.descripcion?' — '+x.ev.descripcion:''}</span>
+      <span class="ev-del" onclick="deleteEvento(${x.ev.id},event); setTimeout(()=>openDayModal('${dateISO}'),150)">✕</span>
+    </div>`).join('') : '<div class="dm-empty">Nada agendado este día todavía.</div>';
+  document.getElementById('dayModal').classList.add('open');
+}
+function closeDayModal(){
+  document.getElementById('dayModal').classList.remove('open');
+  blip(400,.06,'square',.04);
+}
+async function addEventoDelDia(){
+  const titulo = document.getElementById('dmTitulo').value.trim();
+  if(!titulo){ blip(180,.1,'square',.05); return; }
+  const tipo = document.getElementById('dmTipo').value;
+  const iconos = {urgente:'🔴', fecha_importante:'🎂', entrega:'✏️', general:'📌'};
+  await sb.from('eventos').insert({
+    titulo, tipo, prioridad:'normal', recurrencia:'ninguna', fecha:_dmDate,
+    dias_aviso_antes:7, icono: iconos[tipo]
+  });
+  document.getElementById('dmTitulo').value='';
+  blip(750,.08,'sine',.05); setTimeout(()=>blip(1000,.1,'sine',.05),90);
+  await loadEventos();
+  openDayModal(_dmDate);
+}
 function triggerWeekCelebration(){
   document.getElementById('luRank').textContent = '★';
   document.getElementById('luRank').style.opacity = '1';
@@ -1064,11 +1445,13 @@ function startApp(){
   loadPesoChip();
   loadStreak();
   loadWeekProgress();
+  loadEventos();
   sb.channel('home-sync')
     .on('postgres_changes', {event:'*', schema:'public', table:'habits_daily_log'}, ()=>{ loadHabitsHoy(); loadStreak(); loadWeekProgress(); })
     .on('postgres_changes', {event:'*', schema:'public', table:'weight_log'}, ()=>{ loadPesoChip(); })
     .on('postgres_changes', {event:'*', schema:'public', table:'habits_freq_log'}, loadWeekProgress)
     .on('postgres_changes', {event:'*', schema:'public', table:'weekly_goals'}, loadWeekProgress)
+    .on('postgres_changes', {event:'*', schema:'public', table:'eventos'}, loadEventos)
     .subscribe();
 }
 function triggerCelebration(rankIdx){
