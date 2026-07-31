@@ -461,15 +461,16 @@ body{background:var(--black);font-family:var(--f-mono);cursor:default;}
 .login-box .err{ color:var(--accent); font-family:var(--f-mono); font-size:11px; margin-top:10px; min-height:14px; }
 #appRoot{ display:none; }
 
-/* ===== ESCRITORIO (>900px): mejor aprovechamiento de espacio en
-   Tareas&Notas y Calendario — en celular no cambia nada ===== */
+/* ===== ESCRITORIO (>900px): centrar todo el contenido de las
+   subvistas y aprovechar mejor el espacio — en celular no cambia nada ===== */
 @media (min-width:901px){
-  .tn-panel.active{ max-width:1220px; }
+  .subview-head, .subview-desc, .tn-tabs, .cal-tabs{ max-width:1240px; margin-left:auto; margin-right:auto; }
+  .tn-panel.active, .cal-panel.active{ max-width:1240px; margin-left:auto; margin-right:auto; }
+  .tn-board{ margin:0 auto; }
   #tnNotas.active{ display:grid; grid-template-columns:400px 1fr; gap:28px; align-items:start; }
   #tnNotas.active .tn-form{ max-width:none; margin-bottom:0; }
   #calLista.active{ display:grid; grid-template-columns:400px 1fr; gap:28px; align-items:start; }
   #calLista.active .tn-form{ max-width:none; margin-bottom:0; }
-  .cal-panel.active{ max-width:1220px; }
   .cal-grid-card{ max-width:860px; margin:0 auto; }
   .cal-day{ aspect-ratio:auto; min-height:0; height:64px; }
   .pomo-wrap{ max-width:520px; margin:0 auto; }
@@ -700,7 +701,7 @@ body{background:var(--black);font-family:var(--f-mono);cursor:default;}
     <div class="tn-tab active" data-tab="tnNotas" onclick="tnSwitch('tnNotas')">📝 Notas rápidas</div>
     <div class="tn-tab" data-tab="tnTareas" onclick="tnSwitch('tnTareas')">✅ Tareas</div>
     <div class="tn-tab" data-tab="tnPomo" onclick="tnSwitch('tnPomo')">⏱️ Pomodoro</div>
-    <div class="tn-tab" data-tab="tnTimer" onclick="tnSwitch('tnTimer')">⏳ Temporizador</div>
+    <div class="tn-tab" data-tab="tnTimer" onclick="tnSwitch('tnTimer')">⏱️ Cronómetro</div>
   </div>
 
   <!-- NOTAS RÁPIDAS -->
@@ -777,19 +778,9 @@ body{background:var(--black);font-family:var(--f-mono);cursor:default;}
     </div>
   </div>
 
-  <!-- TEMPORIZADOR -->
+  <!-- CRONÓMETRO -->
   <div class="tn-panel" id="tnTimer">
     <div class="pomo-wrap">
-      <div class="pomo-presets">
-        <button class="active" onclick="timerPreset(5,this)">5 min</button>
-        <button onclick="timerPreset(10,this)">10 min</button>
-        <button onclick="timerPreset(20,this)">20 min</button>
-        <button onclick="timerPreset(45,this)">45 min</button>
-      </div>
-      <div style="display:flex; align-items:center; gap:8px; margin-bottom:18px;">
-        <input type="number" id="timerCustomMin" min="1" max="180" placeholder="minutos" style="width:110px; background:var(--black); border:1px solid rgba(245,242,236,.18); color:var(--white); font-family:var(--f-mono); font-size:13px; padding:9px 11px;">
-        <button class="tn-add" style="padding:9px 16px;" onclick="timerSetCustom()">Usar</button>
-      </div>
       <div class="pomo-ring" id="timerRing">
         <div class="pomo-glow"></div>
         <svg width="300" height="300" viewBox="0 0 300 300">
@@ -797,15 +788,17 @@ body{background:var(--black);font-family:var(--f-mono);cursor:default;}
           <circle class="fg" id="timerArc" cx="150" cy="150" r="132" stroke-dasharray="829.4" stroke-dashoffset="0"></circle>
         </svg>
         <div class="pomo-center">
-          <div class="pomo-mode" id="timerModeLbl">TEMPORIZADOR</div>
-          <div class="pomo-time" id="timerTimeLbl">05:00</div>
-          <div class="pomo-tag">CUENTA REGRESIVA LIBRE</div>
+          <div class="pomo-mode">CRONÓMETRO</div>
+          <div class="pomo-time" id="timerTimeLbl">00:00:00</div>
+          <div class="pomo-tag">CUENTA LIBRE HACIA ARRIBA</div>
         </div>
       </div>
       <div class="pomo-btns">
         <button id="timerStartBtn" onclick="timerToggle()">▶ Iniciar</button>
+        <button class="secondary" onclick="timerLap()">🚩 Vuelta</button>
         <button class="secondary" onclick="timerReset()">↺ Reiniciar</button>
       </div>
+      <div id="timerLaps"></div>
     </div>
   </div>
 </div>
@@ -1559,12 +1552,18 @@ function startApp(){
   loadWeekProgress();
   loadEventos();
   checkPushStatus();
+  loadNotas();
+  loadTareas();
+  loadPomoCount();
   sb.channel('home-sync')
     .on('postgres_changes', {event:'*', schema:'public', table:'habits_daily_log'}, ()=>{ loadHabitsHoy(); loadStreak(); loadWeekProgress(); })
     .on('postgres_changes', {event:'*', schema:'public', table:'weight_log'}, ()=>{ loadPesoChip(); })
     .on('postgres_changes', {event:'*', schema:'public', table:'habits_freq_log'}, loadWeekProgress)
     .on('postgres_changes', {event:'*', schema:'public', table:'weekly_goals'}, loadWeekProgress)
     .on('postgres_changes', {event:'*', schema:'public', table:'eventos'}, loadEventos)
+    .on('postgres_changes', {event:'*', schema:'public', table:'notas_home'}, loadNotas)
+    .on('postgres_changes', {event:'*', schema:'public', table:'tareas_home'}, loadTareas)
+    .on('postgres_changes', {event:'*', schema:'public', table:'pomodoro_log'}, loadPomoCount)
     .subscribe();
 }
 function triggerCelebration(rankIdx){
@@ -1616,35 +1615,47 @@ document.querySelectorAll('#notaColors .tn-dot').forEach(dot=>{
   });
 });
 let notas = [];
-try{ notas = JSON.parse(localStorage.getItem('tn_notas')||'[]'); }catch(e){ notas=[]; }
-function saveNotas(){ try{ localStorage.setItem('tn_notas', JSON.stringify(notas)); }catch(e){} }
+async function loadNotas(){
+  const { data } = await sb.from('notas_home').select('*').order('creado_en',{ascending:false});
+  notas = data || [];
+  renderNotas();
+}
 function renderNotas(){
   const list = document.getElementById('notaList');
   if(!notas.length){ list.innerHTML = '<div class="tn-empty">Sin notas todavía — anota lo primero que se te ocurra.</div>'; return; }
-  list.innerHTML = notas.slice().reverse().map(n=>`
-    <div class="tn-note" style="border-left-color:${n.color}">
+  list.innerHTML = notas.map(n=>{
+    const d = new Date(n.creado_en);
+    const fecha = d.getDate()+' '+mesesV[d.getMonth()]+' · '+String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0');
+    return `<div class="tn-note" style="border-left-color:${n.color}">
       <span class="tn-del" onclick="delNota(${n.id})">✕</span>
-      <div class="tn-txt">${escHtml(n.txt)}</div>
-      <div class="tn-meta"><span class="tn-area-tag">${escHtml(n.area)}</span><span>${n.fecha}</span></div>
-    </div>`).join('');
+      <div class="tn-txt">${escHtml(n.texto)}</div>
+      <div class="tn-meta"><span class="tn-area-tag">${escHtml(n.area||'')}</span><span>${fecha}</span></div>
+    </div>`;
+  }).join('');
 }
-function addNota(){
+async function addNota(){
   const ta = document.getElementById('notaTxt');
-  const txt = ta.value.trim();
-  if(!txt) return;
+  const texto = ta.value.trim();
+  if(!texto) return;
   const area = document.getElementById('notaArea').value;
-  const now = new Date();
-  notas.push({ id:Date.now(), txt, color:notaColorSel, area, fecha: now.getDate()+' '+mesesV[now.getMonth()]+' · '+String(now.getHours()).padStart(2,'0')+':'+String(now.getMinutes()).padStart(2,'0') });
-  saveNotas(); renderNotas(); ta.value=''; blip(500,.07,'square',.04); setTimeout(()=>blip(760,.08,'square',.04),60);
+  const { error } = await sb.from('notas_home').insert({ texto, color:notaColorSel, area });
+  if(error){ showToast('No se pudo guardar: '+error.message); return; }
+  ta.value=''; blip(500,.07,'square',.04); setTimeout(()=>blip(760,.08,'square',.04),60);
+  await loadNotas();
 }
-function delNota(id){ notas = notas.filter(n=>n.id!==id); saveNotas(); renderNotas(); blip(300,.05,'square',.03); }
-renderNotas();
+async function delNota(id){
+  await sb.from('notas_home').delete().eq('id', id);
+  blip(300,.05,'square',.03);
+  await loadNotas();
+}
 
 /* ---- TAREAS (tablero en 3 columnas por prioridad) ---- */
-const PRIO_LABEL = { urgente:'Urgente', media:'No muy urgente', normal:'Normal' };
 let tareas = [];
-try{ tareas = JSON.parse(localStorage.getItem('tn_tareas')||'[]'); }catch(e){ tareas=[]; }
-function saveTareas(){ try{ localStorage.setItem('tn_tareas', JSON.stringify(tareas)); }catch(e){} }
+async function loadTareas(){
+  const { data } = await sb.from('tareas_home').select('*').order('id');
+  tareas = (data||[]).map(t=>({ id:t.id, txt:t.texto, prio:t.prioridad, area:t.area, fecha:t.fecha, done:t.completado }));
+  renderTareas();
+}
 function diasRestantes(fechaStr){
   if(!fechaStr) return null;
   const hoy = new Date(); hoy.setHours(0,0,0,0);
@@ -1678,24 +1689,31 @@ function renderTareas(){
   renderCol('media','listMedia','countMedia');
   renderCol('normal','listNormal','countNormal');
 }
-function addTarea(){
+async function addTarea(){
   const inp = document.getElementById('tareaTxt');
-  const txt = inp.value.trim();
-  if(!txt) return;
-  const prio = document.getElementById('tareaPrio').value;
+  const texto = inp.value.trim();
+  if(!texto) return;
+  const prioridad = document.getElementById('tareaPrio').value;
   const area = document.getElementById('tareaArea').value;
-  const fecha = document.getElementById('tareaFecha').value;
-  tareas.push({ id:Date.now(), txt, prio, area, fecha, done:false });
-  saveTareas(); renderTareas(); inp.value=''; document.getElementById('tareaFecha').value='';
+  const fecha = document.getElementById('tareaFecha').value || null;
+  const { error } = await sb.from('tareas_home').insert({ texto, prioridad, area, fecha });
+  if(error){ showToast('No se pudo guardar: '+error.message); return; }
+  inp.value=''; document.getElementById('tareaFecha').value='';
   blip(500,.07,'square',.04); setTimeout(()=>blip(760,.08,'square',.04),60);
+  await loadTareas();
 }
-function toggleTarea(id){
+async function toggleTarea(id){
   const t = tareas.find(x=>x.id===id); if(!t) return;
-  t.done = !t.done; saveTareas(); renderTareas();
-  if(t.done){ blip(500,.1,'square',.05); setTimeout(()=>blip(760,.12,'square',.05),70); } else { blip(300,.06,'square',.03); }
+  const nuevo = !t.done;
+  await sb.from('tareas_home').update({ completado: nuevo }).eq('id', id);
+  if(nuevo){ blip(500,.1,'square',.05); setTimeout(()=>blip(760,.12,'square',.05),70); } else { blip(300,.06,'square',.03); }
+  await loadTareas();
 }
-function delTarea(id){ tareas = tareas.filter(t=>t.id!==id); saveTareas(); renderTareas(); blip(300,.05,'square',.03); }
-renderTareas();
+async function delTarea(id){
+  await sb.from('tareas_home').delete().eq('id', id);
+  blip(300,.05,'square',.03);
+  await loadTareas();
+}
 
 /* ---- POMODORO ---- */
 const POMO_CIRC = 2*Math.PI*98;
@@ -1705,8 +1723,11 @@ let pomoMode = 'focus'; // focus | break
 let pomoRunning = false;
 let pomoInterval = null;
 let pomoSessions = 0;
-try{ pomoSessions = parseInt(localStorage.getItem('tn_pomoCount')||'0',10)||0; }catch(e){}
-document.getElementById('pomoCount').textContent = pomoSessions;
+async function loadPomoCount(){
+  const { data } = await sb.from('pomodoro_log').select('sesiones').eq('fecha', todayISO()).maybeSingle();
+  pomoSessions = data?.sesiones || 0;
+  document.getElementById('pomoCount').textContent = pomoSessions;
+}
 function pomoPreset(work, brk, btn){
   pomoWorkMin = work; pomoBreakMin = brk;
   document.querySelectorAll('.pomo-presets button').forEach(b=>b.classList.remove('active'));
@@ -1752,8 +1773,8 @@ function pomoTick(){
   pomoRemaining = Math.max(0, Math.round((pomoEndAt - Date.now())/1000));
   if(pomoRemaining<=0){
     if(pomoMode==='focus'){
-      pomoSessions++; try{ localStorage.setItem('tn_pomoCount', pomoSessions); }catch(e){}
-      document.getElementById('pomoCount').textContent = pomoSessions;
+      pomoSessions++; document.getElementById('pomoCount').textContent = pomoSessions;
+      sb.from('pomodoro_log').upsert({ fecha: todayISO(), sesiones: pomoSessions });
       pomoMode='break'; pomoRemaining=pomoBreakMin*60;
       playAlarmEnergetic(); showToast('🔥 Enfoque terminado — a descansar');
     } else {
@@ -1776,26 +1797,14 @@ function pomoReset(){
 }
 pomoUpdateDisplay();
 
-/* ===== TEMPORIZADOR LIBRE (independiente del Pomodoro) ===== */
-let timerTotalMin = 5, timerRemaining = 5*60, timerRunning = false, timerInterval = null, timerEndAt = null;
-function timerPreset(min, btn){
-  document.querySelectorAll('#tnTimer .pomo-presets button').forEach(b=>b.classList.remove('active'));
-  btn.classList.add('active');
-  timerTotalMin = min; timerRemaining = min*60;
-  timerReset(true);
-}
-function timerSetCustom(){
-  const v = +document.getElementById('timerCustomMin').value;
-  if(!v || v<1){ blip(180,.1,'square',.05); return; }
-  document.querySelectorAll('#tnTimer .pomo-presets button').forEach(b=>b.classList.remove('active'));
-  timerTotalMin = v; timerRemaining = v*60;
-  timerReset(true);
+/* ===== CRONÓMETRO (cuenta libre hacia arriba, independiente del Pomodoro) ===== */
+let timerElapsed = 0, timerRunning = false, timerInterval = null, timerStartedAt = null, timerLaps = [];
+function timerFmt(sec){
+  const h = Math.floor(sec/3600), m = Math.floor((sec%3600)/60), s = sec%60;
+  return String(h).padStart(2,'0')+':'+String(m).padStart(2,'0')+':'+String(s).padStart(2,'0');
 }
 function timerUpdateDisplay(){
-  const m = Math.floor(timerRemaining/60), s = timerRemaining%60;
-  document.getElementById('timerTimeLbl').textContent = String(m).padStart(2,'0')+':'+String(s).padStart(2,'0');
-  const total = timerTotalMin*60;
-  document.getElementById('timerArc').style.strokeDashoffset = POMO_CIRC*(1 - timerRemaining/total);
+  document.getElementById('timerTimeLbl').textContent = timerFmt(Math.floor(timerElapsed));
 }
 function timerToggle(){
   const btn = document.getElementById('timerStartBtn');
@@ -1804,30 +1813,34 @@ function timerToggle(){
     btn.textContent='▶ Reanudar'; blip(300,.06,'square',.04); return;
   }
   timerRunning=true; document.getElementById('timerRing').classList.add('running'); btn.textContent='⏸ Pausar'; blip(600,.06,'square',.04);
-  timerEndAt = Date.now() + timerRemaining*1000;
+  timerStartedAt = Date.now() - timerElapsed*1000;
   timerInterval = setInterval(timerTick, 1000);
   timerTick();
 }
 function timerTick(){
   if(!timerRunning) return;
-  timerRemaining = Math.max(0, Math.round((timerEndAt - Date.now())/1000));
-  if(timerRemaining<=0){
-    timerRunning=false; clearInterval(timerInterval);
-    document.getElementById('timerRing').classList.remove('running');
-    document.getElementById('timerStartBtn').textContent='▶ Iniciar';
-    playAlarmEnergetic(); showToast('⏳ ¡Temporizador terminado!');
-  }
+  timerElapsed = (Date.now() - timerStartedAt)/1000;
   timerUpdateDisplay();
 }
 document.addEventListener('visibilitychange', ()=>{ if(!document.hidden && timerRunning) timerTick(); });
 window.addEventListener('focus', ()=>{ if(timerRunning) timerTick(); });
-function timerReset(skipSound){
-  timerRunning=false; clearInterval(timerInterval); timerEndAt=null;
+function timerLap(){
+  if(!timerRunning && timerElapsed===0) return;
+  timerLaps.unshift(timerFmt(Math.floor(timerElapsed)));
+  blip(700,.05,'square',.03);
+  renderTimerLaps();
+}
+function renderTimerLaps(){
+  const wrap = document.getElementById('timerLaps');
+  wrap.innerHTML = timerLaps.length ? '<div class="ev-group-title">Vueltas</div>' + timerLaps.map((t,i)=>
+    `<div class="urow" style="cursor:default"><span>Vuelta ${timerLaps.length-i}</span><span>${t}</span></div>`).join('') : '';
+}
+function timerReset(){
+  timerRunning=false; clearInterval(timerInterval); timerElapsed=0; timerStartedAt=null; timerLaps=[];
   document.getElementById('timerRing').classList.remove('running');
-  timerRemaining = timerTotalMin*60;
   document.getElementById('timerStartBtn').textContent='▶ Iniciar';
-  timerUpdateDisplay();
-  if(!skipSound) blip(400,.05,'square',.03);
+  timerUpdateDisplay(); renderTimerLaps();
+  blip(400,.05,'square',.03);
 }
 timerUpdateDisplay();
 
