@@ -805,6 +805,10 @@ async function togglePushNotif(){
   if(!('serviceWorker' in navigator) || !('PushManager' in window)){
     showToast('Tu navegador no soporta notificaciones push'); return;
   }
+  if(Notification.permission === 'denied'){
+    showToast('Notificaciones bloqueadas — actívalas manualmente en Ajustes del sitio de tu navegador');
+    return;
+  }
   const reg = await navigator.serviceWorker.ready;
   const existing = await reg.pushManager.getSubscription();
   if(existing){
@@ -816,16 +820,22 @@ async function togglePushNotif(){
   }
   const perm = await Notification.requestPermission();
   if(perm !== 'granted'){ showToast('Permiso de notificaciones denegado'); return; }
-  const sub = await reg.pushManager.subscribe({
-    userVisibleOnly: true,
-    applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY)
-  });
-  const json = sub.toJSON();
-  await sb.from('push_subscriptions').upsert({
-    endpoint: json.endpoint, p256dh: json.keys.p256dh, auth: json.keys.auth
-  }, { onConflict:'endpoint' });
-  setNotifBtnState(true);
-  showToast('¡Notificaciones activadas! 🔔');
+  try{
+    const sub = await reg.pushManager.subscribe({
+      userVisibleOnly: true,
+      applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY)
+    });
+    const json = sub.toJSON();
+    const { error } = await sb.from('push_subscriptions').upsert({
+      endpoint: json.endpoint, p256dh: json.keys.p256dh, auth: json.keys.auth
+    }, { onConflict:'endpoint' });
+    if(error){ console.error('push_subscriptions error:', error); showToast('Se activó el permiso pero no se pudo guardar: '+error.message); return; }
+    setNotifBtnState(true);
+    showToast('¡Notificaciones activadas! 🔔');
+  } catch(err){
+    console.error('subscribe exception:', err);
+    showToast('No se pudo activar: '+err.message);
+  }
 }
 
 /* ===== REORDEN SOLO CELULAR (≤900px) =====
@@ -1181,7 +1191,7 @@ function renderCtxBanner(){
 
 async function addEvento(){
   const titulo = document.getElementById('evTitulo').value.trim();
-  if(!titulo){ blip(180,.1,'square',.05); return; }
+  if(!titulo){ blip(180,.1,'square',.05); showToast('Ponle un título al recordatorio'); return; }
   const tipo = document.getElementById('evTipo').value;
   const prioridad = document.getElementById('evPrioridad').value;
   const recurrencia = document.getElementById('evRecurrencia').value;
@@ -1191,15 +1201,21 @@ async function addEvento(){
   const dias_aviso_antes = +document.getElementById('evAvisoAntes').value || 7;
   const descripcion = document.getElementById('evDesc').value.trim() || null;
   const iconos = {urgente:'🔴', fecha_importante:'🎂', entrega:'✏️', general:'📌'};
-  const { error } = await sb.from('eventos').insert({
-    titulo, tipo, prioridad, recurrencia, fecha, dia_semana, dia_mes,
-    dias_aviso_antes, descripcion, icono: iconos[tipo]
-  });
-  if(error){ blip(180,.1,'square',.05); return; }
-  document.getElementById('evTitulo').value=''; document.getElementById('evDesc').value='';
-  document.getElementById('evFecha').value=''; document.getElementById('evAvisoAntes').value=7;
-  blip(750,.08,'sine',.05); setTimeout(()=>blip(1000,.1,'sine',.05),90);
-  loadEventos();
+  try{
+    const { error } = await sb.from('eventos').insert({
+      titulo, tipo, prioridad, recurrencia, fecha, dia_semana, dia_mes,
+      dias_aviso_antes, descripcion, icono: iconos[tipo]
+    });
+    if(error){ console.error('addEvento error:', error); blip(180,.1,'square',.05); showToast('No se pudo guardar: '+error.message); return; }
+    document.getElementById('evTitulo').value=''; document.getElementById('evDesc').value='';
+    document.getElementById('evFecha').value=''; document.getElementById('evAvisoAntes').value=7;
+    blip(750,.08,'sine',.05); setTimeout(()=>blip(1000,.1,'sine',.05),90);
+    showToast('Recordatorio agregado ✓');
+    await loadEventos();
+  } catch(err){
+    console.error('addEvento exception:', err);
+    showToast('Error inesperado al guardar, revisa la consola');
+  }
 }
 function renderEventosList(){
   const wrap = document.getElementById('eventosList');
@@ -1670,6 +1686,7 @@ function playMelodyRelax(){
   const notas=[659.25,587.33,523.25,440];
   notas.forEach((f,i)=> setTimeout(()=>blip(f,.4,'sine',.02), i*280));
 }
+let pomoEndAt = null; // timestamp real de cuándo termina el bloque actual
 function pomoToggle(){
   const btn = document.getElementById('pomoStartBtn');
   if(pomoRunning){
@@ -1677,25 +1694,33 @@ function pomoToggle(){
     btn.textContent='▶ Reanudar'; blip(300,.06,'square',.04); return;
   }
   pomoRunning=true; document.getElementById('pomoRing').classList.add('running'); btn.textContent='⏸ Pausar'; blip(600,.06,'square',.04);
-  pomoInterval = setInterval(()=>{
-    pomoRemaining--;
-    if(pomoRemaining<=0){
-      if(pomoMode==='focus'){
-        pomoSessions++; try{ localStorage.setItem('tn_pomoCount', pomoSessions); }catch(e){}
-        document.getElementById('pomoCount').textContent = pomoSessions;
-        pomoMode='break'; pomoRemaining=pomoBreakMin*60;
-        playAlarmEnergetic(); showToast('🔥 Enfoque terminado — a descansar');
-      } else {
-        pomoMode='focus'; pomoRemaining=pomoWorkMin*60;
-        playMelodyRelax(); showToast('✨ Descanso terminado — a enfocarse');
-      }
+  pomoEndAt = Date.now() + pomoRemaining*1000;
+  pomoInterval = setInterval(pomoTick, 1000);
+  pomoTick();
+}
+function pomoTick(){
+  if(!pomoRunning) return;
+  pomoRemaining = Math.max(0, Math.round((pomoEndAt - Date.now())/1000));
+  if(pomoRemaining<=0){
+    if(pomoMode==='focus'){
+      pomoSessions++; try{ localStorage.setItem('tn_pomoCount', pomoSessions); }catch(e){}
+      document.getElementById('pomoCount').textContent = pomoSessions;
+      pomoMode='break'; pomoRemaining=pomoBreakMin*60;
+      playAlarmEnergetic(); showToast('🔥 Enfoque terminado — a descansar');
+    } else {
+      pomoMode='focus'; pomoRemaining=pomoWorkMin*60;
+      playMelodyRelax(); showToast('✨ Descanso terminado — a enfocarse');
     }
-    pomoUpdateDisplay();
-  },1000);
+    pomoEndAt = Date.now() + pomoRemaining*1000;
+  }
   pomoUpdateDisplay();
 }
+/* al volver de segundo plano (minimizada o pantalla bloqueada), el navegador
+   pausa los setInterval — esto pone el timer al día apenas vuelve a primer plano */
+document.addEventListener('visibilitychange', ()=>{ if(!document.hidden && pomoRunning) pomoTick(); });
+window.addEventListener('focus', ()=>{ if(pomoRunning) pomoTick(); });
 function pomoReset(){
-  pomoRunning=false; clearInterval(pomoInterval); document.getElementById('pomoRing').classList.remove('running');
+  pomoRunning=false; clearInterval(pomoInterval); pomoEndAt=null; document.getElementById('pomoRing').classList.remove('running');
   pomoMode='focus'; pomoRemaining=pomoWorkMin*60;
   document.getElementById('pomoStartBtn').textContent='▶ Iniciar';
   pomoUpdateDisplay(); blip(400,.05,'square',.03);
