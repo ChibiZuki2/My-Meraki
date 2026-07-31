@@ -1587,13 +1587,13 @@ const OBJ_MONTH_META = {
 };
 let OBJ_MONTHS = [];
 async function loadObjMonths(){
-  const { data } = await sb.from('obj_months').select('id,month,title,done,priority').order('month').order('id');
+  const { data } = await sb.from('obj_months').select('id,month,title,done,priority,resumen').order('month').order('id');
   const byMonth = {};
   (data||[]).forEach(row=>{
     const meta = OBJ_MONTH_META[row.month];
     if(!meta) return;
     if(!byMonth[row.month]) byMonth[row.month] = {key:meta.key, label:meta.label, sub:meta.sub, m:[row.month-1], items:[]};
-    byMonth[row.month].items.push({ id: row.id, t: row.title, r: '¡Cumplido!', done: !!row.done, priority: !!row.priority });
+    byMonth[row.month].items.push({ id: row.id, t: row.title, r: row.resumen || '¡Cumplido!', done: !!row.done, priority: !!row.priority });
   });
   OBJ_MONTHS = Object.keys(byMonth).sort((a,b)=>a-b).map(k=>byMonth[k]);
   renderObjetivos();

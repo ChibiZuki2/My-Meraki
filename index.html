@@ -345,6 +345,8 @@ body{background:var(--black);font-family:var(--f-mono);cursor:default;}
 #tnTareas.active{ display:block; max-width:none; }
 
 .tn-form{ display:flex; flex-wrap:wrap; gap:9px; align-items:center; margin-bottom:20px; background:linear-gradient(165deg, rgba(229,30,45,.06), rgba(20,16,20,.9)); border:1px solid rgba(245,242,236,.14); padding:16px; max-width:1160px; }
+.tn-mini-field{ display:flex; flex-direction:column; gap:3px; }
+.tn-mini-field .tn-mini-label{ font-family:var(--f-mono); font-size:9px; color:#8a8580; text-transform:uppercase; letter-spacing:.05em; white-space:nowrap; }
 .tn-form input[type=text], .tn-form textarea, .tn-form select, .tn-form input[type=date]{
   font-family:var(--f-mono); font-size:11.5px; color:var(--white); background:rgba(245,242,236,.06); border:1px solid rgba(245,242,236,.22); padding:9px 11px; outline:none; color-scheme:dark; }
 .tn-form input:focus, .tn-form select:focus, .tn-form textarea:focus{ border-color:var(--accent); }
@@ -458,6 +460,20 @@ body{background:var(--black);font-family:var(--f-mono);cursor:default;}
 .login-box button:hover{ filter:brightness(1.1); }
 .login-box .err{ color:var(--accent); font-family:var(--f-mono); font-size:11px; margin-top:10px; min-height:14px; }
 #appRoot{ display:none; }
+
+/* ===== ESCRITORIO (>900px): mejor aprovechamiento de espacio en
+   Tareas&Notas y Calendario — en celular no cambia nada ===== */
+@media (min-width:901px){
+  .tn-panel.active{ max-width:1220px; }
+  #tnNotas.active{ display:grid; grid-template-columns:400px 1fr; gap:28px; align-items:start; }
+  #tnNotas.active .tn-form{ max-width:none; margin-bottom:0; }
+  #calLista.active{ display:grid; grid-template-columns:400px 1fr; gap:28px; align-items:start; }
+  #calLista.active .tn-form{ max-width:none; margin-bottom:0; }
+  .cal-panel.active{ max-width:1220px; }
+  .cal-grid-card{ max-width:860px; margin:0 auto; }
+  .cal-day{ aspect-ratio:auto; min-height:0; height:64px; }
+  .pomo-wrap{ max-width:520px; margin:0 auto; }
+}
 </style>
 </head>
 <body>
@@ -636,7 +652,7 @@ body{background:var(--black);font-family:var(--f-mono);cursor:default;}
         <option value="0">Domingo</option>
       </select>
       <input type="number" id="evDiaMes" min="1" max="31" placeholder="Día del mes (1-31)" style="display:none; max-width:160px;">
-      <input type="number" id="evAvisoAntes" min="0" max="60" value="7" title="Avisar con cuántos días de anticipación" style="max-width:160px;">
+      <div class="tn-mini-field"><span class="tn-mini-label">Avisar con cuántos días antes</span><input type="number" id="evAvisoAntes" min="0" max="60" value="7" style="max-width:160px;"></div>
       <input type="text" id="evDesc" placeholder="Detalle opcional (ej. boceto adjunto)" style="flex:1 1 100%;">
       <button class="tn-add" onclick="addEvento()">+ Agregar recordatorio</button>
     </div>
@@ -684,6 +700,7 @@ body{background:var(--black);font-family:var(--f-mono);cursor:default;}
     <div class="tn-tab active" data-tab="tnNotas" onclick="tnSwitch('tnNotas')">📝 Notas rápidas</div>
     <div class="tn-tab" data-tab="tnTareas" onclick="tnSwitch('tnTareas')">✅ Tareas</div>
     <div class="tn-tab" data-tab="tnPomo" onclick="tnSwitch('tnPomo')">⏱️ Pomodoro</div>
+    <div class="tn-tab" data-tab="tnTimer" onclick="tnSwitch('tnTimer')">⏳ Temporizador</div>
   </div>
 
   <!-- NOTAS RÁPIDAS -->
@@ -757,6 +774,38 @@ body{background:var(--black);font-family:var(--f-mono);cursor:default;}
         <button class="secondary" onclick="pomoReset()">↺ Reiniciar</button>
       </div>
       <div class="pomo-count">Sesiones de enfoque completadas hoy: <b id="pomoCount">0</b></div>
+    </div>
+  </div>
+
+  <!-- TEMPORIZADOR -->
+  <div class="tn-panel" id="tnTimer">
+    <div class="pomo-wrap">
+      <div class="pomo-presets">
+        <button class="active" onclick="timerPreset(5,this)">5 min</button>
+        <button onclick="timerPreset(10,this)">10 min</button>
+        <button onclick="timerPreset(20,this)">20 min</button>
+        <button onclick="timerPreset(45,this)">45 min</button>
+      </div>
+      <div style="display:flex; align-items:center; gap:8px; margin-bottom:18px;">
+        <input type="number" id="timerCustomMin" min="1" max="180" placeholder="minutos" style="width:110px; background:var(--black); border:1px solid rgba(245,242,236,.18); color:var(--white); font-family:var(--f-mono); font-size:13px; padding:9px 11px;">
+        <button class="tn-add" style="padding:9px 16px;" onclick="timerSetCustom()">Usar</button>
+      </div>
+      <div class="pomo-ring" id="timerRing">
+        <div class="pomo-glow"></div>
+        <svg width="300" height="300" viewBox="0 0 300 300">
+          <circle class="bg" cx="150" cy="150" r="132"></circle>
+          <circle class="fg" id="timerArc" cx="150" cy="150" r="132" stroke-dasharray="829.4" stroke-dashoffset="0"></circle>
+        </svg>
+        <div class="pomo-center">
+          <div class="pomo-mode" id="timerModeLbl">TEMPORIZADOR</div>
+          <div class="pomo-time" id="timerTimeLbl">05:00</div>
+          <div class="pomo-tag">CUENTA REGRESIVA LIBRE</div>
+        </div>
+      </div>
+      <div class="pomo-btns">
+        <button id="timerStartBtn" onclick="timerToggle()">▶ Iniciar</button>
+        <button class="secondary" onclick="timerReset()">↺ Reiniciar</button>
+      </div>
     </div>
   </div>
 </div>
@@ -1726,6 +1775,61 @@ function pomoReset(){
   pomoUpdateDisplay(); blip(400,.05,'square',.03);
 }
 pomoUpdateDisplay();
+
+/* ===== TEMPORIZADOR LIBRE (independiente del Pomodoro) ===== */
+let timerTotalMin = 5, timerRemaining = 5*60, timerRunning = false, timerInterval = null, timerEndAt = null;
+function timerPreset(min, btn){
+  document.querySelectorAll('#tnTimer .pomo-presets button').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  timerTotalMin = min; timerRemaining = min*60;
+  timerReset(true);
+}
+function timerSetCustom(){
+  const v = +document.getElementById('timerCustomMin').value;
+  if(!v || v<1){ blip(180,.1,'square',.05); return; }
+  document.querySelectorAll('#tnTimer .pomo-presets button').forEach(b=>b.classList.remove('active'));
+  timerTotalMin = v; timerRemaining = v*60;
+  timerReset(true);
+}
+function timerUpdateDisplay(){
+  const m = Math.floor(timerRemaining/60), s = timerRemaining%60;
+  document.getElementById('timerTimeLbl').textContent = String(m).padStart(2,'0')+':'+String(s).padStart(2,'0');
+  const total = timerTotalMin*60;
+  document.getElementById('timerArc').style.strokeDashoffset = POMO_CIRC*(1 - timerRemaining/total);
+}
+function timerToggle(){
+  const btn = document.getElementById('timerStartBtn');
+  if(timerRunning){
+    timerRunning=false; clearInterval(timerInterval); document.getElementById('timerRing').classList.remove('running');
+    btn.textContent='▶ Reanudar'; blip(300,.06,'square',.04); return;
+  }
+  timerRunning=true; document.getElementById('timerRing').classList.add('running'); btn.textContent='⏸ Pausar'; blip(600,.06,'square',.04);
+  timerEndAt = Date.now() + timerRemaining*1000;
+  timerInterval = setInterval(timerTick, 1000);
+  timerTick();
+}
+function timerTick(){
+  if(!timerRunning) return;
+  timerRemaining = Math.max(0, Math.round((timerEndAt - Date.now())/1000));
+  if(timerRemaining<=0){
+    timerRunning=false; clearInterval(timerInterval);
+    document.getElementById('timerRing').classList.remove('running');
+    document.getElementById('timerStartBtn').textContent='▶ Iniciar';
+    playAlarmEnergetic(); showToast('⏳ ¡Temporizador terminado!');
+  }
+  timerUpdateDisplay();
+}
+document.addEventListener('visibilitychange', ()=>{ if(!document.hidden && timerRunning) timerTick(); });
+window.addEventListener('focus', ()=>{ if(timerRunning) timerTick(); });
+function timerReset(skipSound){
+  timerRunning=false; clearInterval(timerInterval); timerEndAt=null;
+  document.getElementById('timerRing').classList.remove('running');
+  timerRemaining = timerTotalMin*60;
+  document.getElementById('timerStartBtn').textContent='▶ Iniciar';
+  timerUpdateDisplay();
+  if(!skipSound) blip(400,.05,'square',.03);
+}
+timerUpdateDisplay();
 
 /* ===== LOGIN / SESIÓN ===== */
 function showApp(){
