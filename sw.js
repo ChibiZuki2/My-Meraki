@@ -1,4 +1,4 @@
-const CACHE = 'my-merakiyo-v2';
+const CACHE = 'my-merakiyo-v3';
 const SHELL = ['/index.html', '/cuerpo.html', '/manifest.json', '/icon-192.png', '/icon-512.png'];
 
 self.addEventListener('install', (e) => {
@@ -26,5 +26,31 @@ self.addEventListener('fetch', (e) => {
         return res;
       })
       .catch(() => caches.match(e.request))
+  );
+});
+
+/* ===== NOTIFICACIONES PUSH ===== */
+self.addEventListener('push', (e) => {
+  let data = { title: 'My Merakiyo', body: 'Tienes algo pendiente.' };
+  try { data = e.data.json(); } catch(err) {}
+  e.waitUntil(
+    self.registration.showNotification(data.title || 'My Merakiyo', {
+      body: data.body || '',
+      icon: '/icon-192.png',
+      badge: '/icon-192.png',
+      tag: data.tag || 'merakiyo-recordatorio',
+      data: { url: data.url || '/index.html' }
+    })
+  );
+});
+
+self.addEventListener('notificationclick', (e) => {
+  e.notification.close();
+  const url = (e.notification.data && e.notification.data.url) || '/index.html';
+  e.waitUntil(
+    clients.matchAll({ type:'window', includeUncontrolled:true }).then(list => {
+      for (const c of list) { if (c.url.includes(url) && 'focus' in c) return c.focus(); }
+      if (clients.openWindow) return clients.openWindow(url);
+    })
   );
 });

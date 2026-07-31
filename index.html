@@ -514,6 +514,7 @@ body{background:var(--black);font-family:var(--f-mono);cursor:default;}
       <div class="hud-status">
         <div class="hud-top">
           <div class="style-btn" onclick="cyclePreset()"><span class="style-ic">🎨</span><span class="style-lbl" id="presetLabel">PS CLÁSICO</span></div>
+          <div class="style-btn" id="notifBtn" onclick="togglePushNotif()" style="margin-left:6px;"><span class="style-ic">🔕</span><span class="style-lbl" id="notifLabel">AVISOS</span></div>
           <div class="hud-clock" id="hudClock">19:42</div>
         </div>
         <div id="hudFecha">17 JUL 2026 · MIÉ</div>
@@ -780,6 +781,52 @@ function mondayOfWeekISO(){
   return monday.getFullYear()+'-'+String(monday.getMonth()+1).padStart(2,'0')+'-'+String(monday.getDate()).padStart(2,'0');
 }
 const MONTH_GOALS = {7:96, 8:92.5, 9:88.5, 10:85.5, 11:82.5, 12:80};
+
+/* ===== NOTIFICACIONES PUSH ===== */
+const VAPID_PUBLIC_KEY = 'BJcl7ufugj4fhJtwrxaw1wAnmGyKwcFGDf9zBx-uPpidy_zRE3mbtmNXCBO8Q_vzTEatBuFgVeCLJ6jDMqbTugM';
+function urlBase64ToUint8Array(base64String){
+  const padding = '='.repeat((4 - base64String.length % 4) % 4);
+  const base64 = (base64String + padding).replace(/-/g,'+').replace(/_/g,'/');
+  const raw = atob(base64);
+  return Uint8Array.from([...raw].map(c=>c.charCodeAt(0)));
+}
+async function checkPushStatus(){
+  if(!('serviceWorker' in navigator) || !('PushManager' in window)) return;
+  const reg = await navigator.serviceWorker.ready;
+  const sub = await reg.pushManager.getSubscription();
+  setNotifBtnState(!!sub);
+}
+function setNotifBtnState(on){
+  document.querySelector('#notifBtn .style-ic').textContent = on ? '🔔' : '🔕';
+  document.getElementById('notifLabel').textContent = on ? 'AVISOS ON' : 'AVISOS';
+}
+async function togglePushNotif(){
+  blip(500,.05,'square',.03);
+  if(!('serviceWorker' in navigator) || !('PushManager' in window)){
+    showToast('Tu navegador no soporta notificaciones push'); return;
+  }
+  const reg = await navigator.serviceWorker.ready;
+  const existing = await reg.pushManager.getSubscription();
+  if(existing){
+    await sb.from('push_subscriptions').delete().eq('endpoint', existing.endpoint);
+    await existing.unsubscribe();
+    setNotifBtnState(false);
+    showToast('Notificaciones desactivadas');
+    return;
+  }
+  const perm = await Notification.requestPermission();
+  if(perm !== 'granted'){ showToast('Permiso de notificaciones denegado'); return; }
+  const sub = await reg.pushManager.subscribe({
+    userVisibleOnly: true,
+    applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY)
+  });
+  const json = sub.toJSON();
+  await sb.from('push_subscriptions').upsert({
+    endpoint: json.endpoint, p256dh: json.keys.p256dh, auth: json.keys.auth
+  }, { onConflict:'endpoint' });
+  setNotifBtnState(true);
+  showToast('¡Notificaciones activadas! 🔔');
+}
 
 /* ===== REORDEN SOLO CELULAR (≤900px) =====
    En desktop no se toca nada. En celular:
@@ -1446,6 +1493,7 @@ function startApp(){
   loadStreak();
   loadWeekProgress();
   loadEventos();
+  checkPushStatus();
   sb.channel('home-sync')
     .on('postgres_changes', {event:'*', schema:'public', table:'habits_daily_log'}, ()=>{ loadHabitsHoy(); loadStreak(); loadWeekProgress(); })
     .on('postgres_changes', {event:'*', schema:'public', table:'weight_log'}, ()=>{ loadPesoChip(); })
