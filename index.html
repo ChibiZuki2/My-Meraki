@@ -1440,6 +1440,7 @@ function buildRail(){
     d.innerHTML = `<div class="in"><div class="ic"><svg viewBox="0 0 24 24">${ICONS[a.ic]}</svg></div><div><div class="mod">MOD-${a.mod}</div><div class="nm">${a.nm}</div><div class="st">${a.st}</div></div></div>`;
     d.addEventListener('click', ()=>{
       if(a.id==='cuerpo'){ location.href='cuerpo.html'; }
+      else if(a.id==='trabajo'){ location.href='trabajo.html'; }
       else { showToast(`↳ Enlace a "${a.nm}" — área aún no construida`); }
     });
     railTrack.appendChild(d);
@@ -1463,6 +1464,7 @@ AREAS.forEach((a,i)=>{
   d.innerHTML = `<div class="row-top"><div class="mod">MOD-${a.mod}</div><div class="img-btn">☰ IMG</div></div><div><div class="nm">${a.nm}</div><div class="st">${a.st}</div></div>`;
   d.addEventListener('click', ()=>{
     if(a.id==='cuerpo'){ location.href='cuerpo.html'; }
+    else if(a.id==='trabajo'){ location.href='trabajo.html'; }
     else { showToast(`↳ Entrar a "${a.nm}" — pendiente de construir`); }
   });
   areasGrid.appendChild(d);
