@@ -335,6 +335,11 @@ body{background:var(--black);font-family:var(--f-mono);cursor:default;}
 #notasView::after{ content:""; position:absolute; inset:0; pointer-events:none; z-index:0;
   background:repeating-linear-gradient(135deg, transparent 0 40px, rgba(255,255,255,.02) 40px 42px); }
 #notasView > *{ position:relative; z-index:1; }
+#calView::before{ content:""; position:absolute; top:-10%; right:-16%; width:60vw; height:120vh; pointer-events:none;
+  background-image:radial-gradient(var(--accent) 22%, transparent 23%); background-size:15px 15px; opacity:.13; transform:rotate(-8deg); z-index:0; }
+#calView::after{ content:""; position:absolute; inset:0; pointer-events:none; z-index:0;
+  background:repeating-linear-gradient(135deg, transparent 0 40px, rgba(255,255,255,.02) 40px 42px); }
+#calView > *{ position:relative; z-index:1; }
 
 .tn-tabs{ display:flex; gap:6px; padding:1vh 6vw 2.6vh; flex-wrap:wrap; }
 .tn-tab{ font-family:'Archivo Black',sans-serif; font-size:12px; letter-spacing:1px; text-transform:uppercase; color:var(--paper); background:rgba(245,242,236,.05); border:1px solid rgba(245,242,236,.18); padding:9px 18px; cursor:pointer; transition:.15s; }
@@ -467,6 +472,7 @@ body{background:var(--black);font-family:var(--f-mono);cursor:default;}
   .subview-head, .subview-desc, .tn-tabs, .cal-tabs{ max-width:1240px; margin-left:auto; margin-right:auto; }
   .tn-panel.active, .cal-panel.active{ max-width:1240px; margin-left:auto; margin-right:auto; }
   .tn-board{ margin:0 auto; }
+  #tnTareas.active .tn-form{ margin-left:auto; margin-right:auto; }
   #tnNotas.active{ display:grid; grid-template-columns:400px 1fr; gap:28px; align-items:start; }
   #tnNotas.active .tn-form{ max-width:none; margin-bottom:0; }
   #calLista.active{ display:grid; grid-template-columns:400px 1fr; gap:28px; align-items:start; }
